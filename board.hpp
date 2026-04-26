@@ -39,7 +39,11 @@ class Board{
         void print_binary(uint64_t);
         void print_bitboard(uint64_t);
 
-        uint64_t knight_attacks(uint64_t square, uint64_t friendly_pieces);
+        uint64_t knight_moves(uint8_t square);
+        uint64_t rook_moves(uint8_t square);
+        uint64_t bishop_moves(uint8_t square);
+        uint64_t queen_moves(uint8_t square);
+        uint64_t king_moves(uint8_t square);
         PawnMoves white_pawn_moves();
         PawnMoves black_pawn_moves();
 };
