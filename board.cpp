@@ -2,7 +2,6 @@
 #include <iostream>
 #include <bitset>
 
-
     Board::Board(){
         init_board();
     }
@@ -22,6 +21,8 @@
         black_queens = 0x0800000000000000;
         black_king = 0x1000000000000000;
 
+        castling_rights = 0x0F;
+        en_passant_target = 0x0000000000000000;
         white_to_move = true;
     }
 
@@ -147,34 +148,116 @@
         return rook_moves(square) | bishop_moves(square);
     }
 
+    uint64_t Board::king_moves(uint8_t square){
+        uint64_t k = 1ULL << square;
+        uint64_t friendly_pieces = white_to_move ? white_pieces() : black_pieces();
+        uint64_t occupied_squares = all_pieces();
 
-    // ATTUALMENTE SENZA EN PASSANT
-    PawnMoves Board::white_pawn_moves(){
-        PawnMoves moves;
-        
-        uint64_t empty = empty_squares();
-        uint64_t enemy = black_pieces();
+        uint64_t attacks = (k << 1) & NOT_A_FILE;
+        attacks |= (k >> 1) & NOT_H_FILE;
+        attacks |= (k << 7) & NOT_H_FILE;
+        attacks |= (k << 8);
+        attacks |= (k << 9) & NOT_A_FILE;
+        attacks |= (k >> 7) & NOT_A_FILE;
+        attacks |= (k >> 8);
+        attacks |= (k >> 9) & NOT_H_FILE;
+
+        attacks &= ~friendly_pieces;
+
+        // Castling logic
+        if(white_to_move){
+            // White side
+            if(square == 4){
+                // King side
+                if((castling_rights & WK) && !(occupied_squares & (1ULL  << 5 | 1ULL << 6))){
+                    // Da aggiungere se lo square è attaccato!!!!
+                    attacks |= (1ULL << 6);
+                }
+
+                // Queen side
+                if((castling_rights & WQ) && !(occupied_squares & (1ULL  << 3 | 1ULL << 2 | 1ULL << 1))){
+                    // Da aggiungere se lo square è attaccato!!!!!
+                    attacks |= (1ULL << 2);
+                }
+            }
+        }else {
+            // Black side
+            if(square == 60){
+                // King side
+                if((castling_rights & BK) && !(occupied_squares &(1ULL << 61 | 1ULL << 62))){
+                    // Da aggiungere Square attaccato!!!
+                    attacks |= (1ULL << 62);
+                }
+
+                if((castling_rights & BQ) && !(occupied_squares &(1ULL << 59 | 1ULL << 58 | 1ULL << 57))){
+                    //logica attaccato!!!!
+                    attacks |= (1ULL << 58);
+                }
+            }
+        }
 
 
-        moves.single_push = (white_pawns << 8) & empty;
-        moves.double_push = ((moves.single_push & 0x0000000000FF0000) << 8) & empty;
-
-        moves.capture_left = (white_pawns << 7) & NOT_H_FILE & enemy;
-        moves.capture_right = (white_pawns << 9) & NOT_A_FILE & enemy;
-        return moves;
+        return attacks;
     }
 
-    PawnMoves Board::black_pawn_moves(){
+    PawnMoves Board::pawn_moves(){
         PawnMoves moves;
         
-        uint64_t empty = empty_squares();
-        uint64_t enemy = white_pieces();
+        if(white_to_move){
+            uint64_t empty = empty_squares();
+            uint64_t enemy = black_pieces() | en_passant_target;
 
 
-        moves.single_push = (black_pawns >> 8) & empty;
-        moves.double_push = ((moves.single_push & 0x0000FF0000000000) >> 8) & empty;
+            moves.single_push = (white_pawns << 8) & empty;
+            moves.double_push = ((moves.single_push & 0x0000000000FF0000) << 8) & empty;
 
-        moves.capture_left = (black_pawns >> 7) & NOT_H_FILE & enemy;
-        moves.capture_right = (black_pawns >> 9) & NOT_A_FILE & enemy;
+            moves.capture_left = (white_pawns << 7) & NOT_H_FILE & enemy;
+            moves.capture_right = (white_pawns << 9) & NOT_A_FILE & enemy;
         return moves;
+        }else {
+            uint64_t empty = empty_squares();
+            uint64_t enemy = white_pieces() | en_passant_target;
+
+
+            moves.single_push = (black_pawns >> 8) & empty;
+            moves.double_push = ((moves.single_push & 0x0000FF0000000000) >> 8) & empty;
+
+            moves.capture_left = (black_pawns >> 7) & NOT_A_FILE & enemy;
+            moves.capture_right = (black_pawns >> 9) & NOT_H_FILE & enemy;
+            return moves;
+        }
+    }
+
+    PieceType Board::get_piece_at(uint8_t square, bool check_white){
+        uint64_t mask = 1ULL << square;
+
+        if(check_white){
+            if(white_pawns & mask) return PAWN;
+            if(white_knights & mask) return KNIGHT;
+            if(white_bishops & mask) return BISHOP;
+            if(white_rooks & mask) return ROOK;
+            if(white_queens & mask) return QUEEN;
+            if(white_king & mask) return KING;
+        }else{
+            if(black_pawns & mask) return PAWN;
+            if(black_knights & mask) return KNIGHT;
+            if(black_bishops & mask) return BISHOP;
+            if(black_rooks & mask) return ROOK;
+            if(black_queens & mask) return QUEEN;
+            if(black_king & mask) return KING;
+        }
+
+        return EMPTY;
+    }
+
+    void Board::make_move(Move move){
+        int flags = get_move_flags(move);
+        int from = get_move_from(move);
+        int to = get_move_to(move);
+
+        PieceType moved_piece = get_piece_at(from, white_to_move);
+        PieceType captured_piece = get_piece_at(to, !white_to_move);
+
+        BoardState current_state = {castling_rights, en_passant_target, captured_piece};
+        history.push_back(current_state);
     }

@@ -8,5 +8,7 @@ int main(){
 
     cout << "--Pezzi Bianchi--" << endl;
 
-    currentBoard.print_bitboard(currentBoard.queen_attacks(36));
+    currentBoard.print_bitboard(currentBoard.pawn_moves().get_all());
+
+    cout << currentBoard.get_piece_at(4, currentBoard.white_to_move) << endl;
 }
