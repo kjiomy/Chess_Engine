@@ -36,6 +36,8 @@ class Board{
 
         void make_move(Move move);
 
+        std::vector<Move> generate_all_moves();
+
     private:
         std::vector<BoardState> history;
 };

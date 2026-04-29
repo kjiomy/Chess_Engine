@@ -260,4 +260,119 @@
 
         BoardState current_state = {castling_rights, en_passant_target, captured_piece};
         history.push_back(current_state);
+
+        en_passant_target = 0;
+
+        uint64_t move_mask = (1ULL << from) |  (1ULL << to);
+
+        if(white_to_move){
+            switch(moved_piece){
+                case PAWN: white_pawns ^= move_mask; break;
+                case KNIGHT: white_knights ^= move_mask; break;
+                case BISHOP: white_bishops ^= move_mask; break;
+                case ROOK: white_rooks ^= move_mask; break;
+                case QUEEN: white_queens ^= move_mask; break;
+                case KING: white_king ^= move_mask; break;
+                case EMPTY: break;
+            }
+        }else{
+            switch(moved_piece){
+                case PAWN: black_pawns ^= move_mask; break;
+                case KNIGHT: black_knights ^= move_mask; break;
+                case BISHOP: black_bishops ^= move_mask; break;
+                case ROOK: black_rooks ^= move_mask; break;
+                case QUEEN: black_queens ^= move_mask; break;
+                case KING: black_king ^= move_mask; break;
+                case EMPTY: break;
+            }
+        }
+
+        if(captured_piece != EMPTY && flags != EP_CAPTURE){
+            uint64_t capture_mask = ~(1ULL << to);
+
+            if(white_to_move){
+                switch(captured_piece){
+                    case PAWN: black_pawns &= capture_mask; break;
+                    case KNIGHT: black_knights &= capture_mask; break;
+                    case BISHOP: black_bishops &= capture_mask; break;
+                    case ROOK: black_rooks &= capture_mask; break;
+                    case QUEEN: black_queens &= capture_mask; break;
+                    case KING: black_king &= capture_mask; break;
+                    case EMPTY: break;
+                }
+            }else{
+                switch(captured_piece){
+                    case PAWN: white_pawns &= capture_mask; break;
+                    case KNIGHT: white_knights &= capture_mask; break;
+                    case BISHOP: white_bishops &= capture_mask; break;
+                    case ROOK: white_rooks &= capture_mask; break;
+                    case QUEEN: white_queens &= capture_mask; break;
+                    case KING: white_king &= capture_mask; break;
+                    case EMPTY: break;
+                }
+            }
+        }
+
+        //devo implementare TUTTI i flags...
+        if(flags == DOUBLE_PAWN_PUSH){
+            en_passant_target = white_to_move ? (1ULL << (from + 8)) : (1ULL << (from - 8));
+        }else if(flags == KING_CASTLE){
+
+        }
+
+        //aggiornare i diritti di arrocco!!!;
+        white_to_move = !white_to_move;
+    }
+
+    //da implementare unmake move!!!!!
+
+    std::vector<Move> Board::generate_all_moves(){
+        std::vector<Move> moves;
+        moves.reserve(256);
+
+        uint64_t enemy_pieces = white_to_move ? black_pieces() : white_pieces();
+        uint64_t knights = white_to_move ? white_knights : black_knights;
+        while(knights){
+            int from = pop_lsb(knights);
+            uint64_t attacks = knight_moves(from);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                moves.push_back(encode_move(from, to, flag));
+            }
+        }
+
+        uint64_t bishops = white_to_move ? white_bishops : black_bishops;
+        while(bishops){
+            int from = pop_lsb(bishops);
+            uint64_t attacks = bishop_moves(from);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                moves.push_back(encode_move(from, to, flag));
+            }
+        }
+
+        uint64_t rooks = white_to_move ? white_rooks : black_rooks;
+        while(rooks){
+            int from = pop_lsb(rooks);
+            uint64_t attacks = rook_moves(from);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                moves.push_back(encode_move(from, to, flag));
+            }
+        }
+
+        
+        return moves;
     }

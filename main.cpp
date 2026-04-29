@@ -1,14 +1,20 @@
 #include <iostream>
 #include "board.hpp"
+#include "uci.hpp"
 
 using namespace std;
 
 int main(){
     Board currentBoard;
 
-    cout << "--Pezzi Bianchi--" << endl;
+    std::vector<Move> mosse;
 
-    currentBoard.print_bitboard(currentBoard.pawn_moves().get_all());
+    mosse = currentBoard.generate_all_moves();
 
-    cout << currentBoard.get_piece_at(4, currentBoard.white_to_move) << endl;
+    for(auto mossa : mosse){
+        cout << "from: " << get_move_from(mossa) << ", to " << get_move_to(mossa) << ", flags: " << get_move_flags(mossa) << endl;
+    }
+
+    //uci_loop(currentBoard);
+
 }

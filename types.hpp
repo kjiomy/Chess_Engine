@@ -68,3 +68,11 @@ inline int get_move_to(Move move){
 inline int get_move_from(Move move){
     return move & 0x3F;
 }
+
+inline int pop_lsb(uint64_t& bb){
+    int lsb = __builtin_ctzll(bb);
+
+    bb &= bb -1;
+
+    return lsb;
+}
