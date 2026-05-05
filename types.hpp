@@ -7,6 +7,8 @@ constexpr uint64_t MASK_64 = 0xFFFFFFFFFFFFFFFF;
 
 typedef uint16_t Move;
 
+
+
 enum Castling  {
     WK = 1,
     WQ = 2,

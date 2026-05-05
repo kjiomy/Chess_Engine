@@ -2,6 +2,41 @@
 #include <iostream>
 #include <bitset>
 
+
+
+    void Board::print_board(){
+        std::vector<std::string> board(64, ".");
+        std::string black_unicode[] = {".", "♙", "♘", "♗", "♖", "♕", "♔"};
+        std::string white_unicode[] = {".", "♟", "♞", "♝", "♜", "♛", "♚"};
+
+        uint64_t whites = white_pieces();
+        uint64_t blacks = black_pieces();
+
+        while(whites){
+            uint8_t current = pop_lsb(whites);
+
+            board[current] = white_unicode[get_piece_at(current, 1)];
+        }
+
+        while(blacks){
+            uint8_t current = pop_lsb(blacks);
+
+            board[current] = black_unicode[get_piece_at(current, 0)];
+        }
+        
+
+        for(int row = 7; row >= 0; row--){
+            std::cout << row + 1 << "  ";
+
+            for(int column = 0; column < 8; column++){
+                std::cout << board[row * 8 + column] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << std::endl << "   a b c d e f g h" << std::endl;
+    }
+
     Board::Board(){
         init_board();
     }
@@ -228,6 +263,7 @@
         }
     }
 
+    
     PieceType Board::get_piece_at(uint8_t square, bool check_white){
         uint64_t mask = 1ULL << square;
 
@@ -249,7 +285,7 @@
 
         return EMPTY;
     }
-
+//da finire
     void Board::make_move(Move move){
         int flags = get_move_flags(move);
         int from = get_move_from(move);
@@ -363,6 +399,20 @@
         while(rooks){
             int from = pop_lsb(rooks);
             uint64_t attacks = rook_moves(from);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                moves.push_back(encode_move(from, to, flag));
+            }
+        }
+
+        uint64_t queens = white_to_move ? white_queens : black_queens;
+        while(queens){
+            int from = pop_lsb(queens);
+            uint64_t attacks = queen_moves(from);
 
             while(attacks){
                 int to = pop_lsb(attacks);

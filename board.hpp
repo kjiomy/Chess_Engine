@@ -23,6 +23,7 @@ class Board{
 
         void print_binary(uint64_t);
         void print_bitboard(uint64_t);
+        void print_board();
 
         uint64_t knight_moves(uint8_t square);
         uint64_t rook_moves(uint8_t square);
@@ -33,6 +34,7 @@ class Board{
         PawnMoves pawn_moves();
 
         PieceType get_piece_at(uint8_t square, bool check_white);
+        bool is_square_attacked(uint8_t square);
 
         void make_move(Move move);
 
