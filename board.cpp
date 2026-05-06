@@ -61,6 +61,8 @@
         white_to_move = true;
     }
 
+// Functions to get various pieces/squares
+
     uint64_t Board::white_pieces(){
         return white_pawns | white_bishops | white_king | white_knights | white_rooks | white_queens;
     }
@@ -76,6 +78,8 @@
     uint64_t Board::empty_squares(){
         return ~all_pieces();
     }
+
+// Ausiliary functions 
 
     void Board::print_binary(uint64_t bitboard){
         std::cout << std::bitset<64>(bitboard) << std::endl;
@@ -101,7 +105,11 @@
         std::cout << std::endl << "   a b c d e f g h" << std::endl;
     }
 
-    uint64_t Board::knight_moves(uint8_t square){
+
+
+// Functions to calculate the pseudo-legal moves for every piece
+
+    uint64_t Board::pseudolegal_knight_moves(uint8_t square){
         uint64_t k = 1ULL << square;
         uint64_t friendly_pieces = white_to_move ? white_pieces() : black_pieces();
 
@@ -118,7 +126,7 @@
         return attacks;
     }
 
-    uint64_t Board::rook_moves(uint8_t square){
+    uint64_t Board::pseudolegal_rook_moves(uint8_t square){
         uint64_t attacks = 0;
         uint64_t empty = empty_squares();
         uint64_t enemy = white_to_move ? black_pieces() : white_pieces();
@@ -149,7 +157,7 @@
         return attacks;
     }
 
-    uint64_t Board::bishop_moves(uint8_t square){
+    uint64_t Board::pseudolegal_bishop_moves(uint8_t square){
         uint64_t attacks = 0;
         uint64_t enemy = white_to_move ? black_pieces() : white_pieces();
         uint64_t friendly = white_to_move ? white_pieces() : black_pieces();
@@ -179,11 +187,11 @@
         return attacks;
     }
 
-    uint64_t Board::queen_moves(uint8_t square){
-        return rook_moves(square) | bishop_moves(square);
+    uint64_t Board::pseudolegal_queen_moves(uint8_t square){
+        return pseudolegal_rook_moves(square) | pseudolegal_bishop_moves(square);
     }
 
-    uint64_t Board::king_moves(uint8_t square){
+    uint64_t Board::pseudolegal_king_moves(uint8_t square){
         uint64_t k = 1ULL << square;
         uint64_t friendly_pieces = white_to_move ? white_pieces() : black_pieces();
         uint64_t occupied_squares = all_pieces();
@@ -235,7 +243,7 @@
         return attacks;
     }
 
-    PawnMoves Board::pawn_moves(){
+    PawnMoves Board::pseudolegal_pawn_moves(){
         PawnMoves moves;
         
         if(white_to_move){
@@ -263,7 +271,86 @@
         }
     }
 
+
+
+    void Board::place_piece(int square, PieceType piece, bool is_white){
+        uint64_t place_mask = 1ULL << square;
+
+        if(is_white){
+            switch(piece){
+                case PAWN: white_pawns |= place_mask; break;
+                case KNIGHT: white_knights |= place_mask; break;
+                case BISHOP: white_bishops |= place_mask; break;
+                case ROOK: white_rooks |= place_mask; break;
+                case QUEEN: white_queens |= place_mask; break;
+                case KING: white_king |= place_mask; break;
+                case EMPTY: break;
+            }
+        }else{
+            switch(piece){
+                case PAWN: black_pawns |= place_mask; break;
+                case KNIGHT: black_knights |= place_mask; break;
+                case BISHOP: black_bishops |= place_mask; break;
+                case ROOK: black_rooks |= place_mask; break;
+                case QUEEN: black_queens |= place_mask; break;
+                case KING: black_king |= place_mask; break;
+                case EMPTY: break;
+            }
+        }
+    }
+
+    void Board::remove_piece(int square, PieceType piece, bool is_white){
+        uint64_t remove_mask = ~(1ULL << square);
+
+        if(is_white){
+            switch(piece){
+                case PAWN: white_pawns &= remove_mask; break;
+                case KNIGHT: white_knights &= remove_mask; break;
+                case BISHOP: white_bishops &= remove_mask; break;
+                case ROOK: white_rooks &= remove_mask; break;
+                case QUEEN: white_queens &= remove_mask; break;
+                case KING: white_king &= remove_mask; break;
+                case EMPTY: break;
+            }
+        }else{
+            switch(piece){
+                case PAWN: black_pawns &= remove_mask; break;
+                case KNIGHT: black_knights &= remove_mask; break;
+                case BISHOP: black_bishops &= remove_mask; break;
+                case ROOK: black_rooks &= remove_mask; break;
+                case QUEEN: black_queens &= remove_mask; break;
+                case KING: black_king &= remove_mask; break;
+                case EMPTY: break;
+            }
+        }
+    }
     
+    void Board::toggle_piece(PieceType piece, bool is_white, uint64_t toggle_mask){
+        if(is_white){
+            switch(piece){
+                case PAWN: white_pawns ^= toggle_mask; break;
+                case KNIGHT: white_knights ^= toggle_mask; break;
+                case BISHOP: white_bishops ^= toggle_mask; break;
+                case ROOK: white_rooks ^= toggle_mask; break;
+                case QUEEN: white_queens ^= toggle_mask; break;
+                case KING: white_king ^= toggle_mask; break;
+                case EMPTY: break;
+            }
+        }else{
+            switch(piece){
+                case PAWN: black_pawns ^= toggle_mask; break;
+                case KNIGHT: black_knights ^= toggle_mask; break;
+                case BISHOP: black_bishops ^= toggle_mask; break;
+                case ROOK: black_rooks ^= toggle_mask; break;
+                case QUEEN: black_queens ^= toggle_mask; break;
+                case KING: black_king ^= toggle_mask; break;
+                case EMPTY: break;
+            }
+        }
+    }
+
+
+
     PieceType Board::get_piece_at(uint8_t square, bool check_white){
         uint64_t mask = 1ULL << square;
 
@@ -285,68 +372,41 @@
 
         return EMPTY;
     }
-//da finire
+   
+   
+    //da finire con tutti i vari flag ecc...
     void Board::make_move(Move move){
         int flags = get_move_flags(move);
         int from = get_move_from(move);
         int to = get_move_to(move);
 
         PieceType moved_piece = get_piece_at(from, white_to_move);
-        PieceType captured_piece = get_piece_at(to, !white_to_move);
+        PieceType captured_piece;
+        int captured_square = to;
 
-        BoardState current_state = {castling_rights, en_passant_target, captured_piece};
+        if(flags == EP_CAPTURE){
+            captured_square = white_to_move ? to - 8 : to + 8;
+            captured_piece = PAWN;
+        }else{
+            captured_piece  = get_piece_at(to, !white_to_move);
+        }
+
+
+        BoardState current_state = {castling_rights, en_passant_target, captured_square, captured_piece, !white_to_move};
         history.push_back(current_state);
 
         en_passant_target = 0;
 
         uint64_t move_mask = (1ULL << from) |  (1ULL << to);
 
-        if(white_to_move){
-            switch(moved_piece){
-                case PAWN: white_pawns ^= move_mask; break;
-                case KNIGHT: white_knights ^= move_mask; break;
-                case BISHOP: white_bishops ^= move_mask; break;
-                case ROOK: white_rooks ^= move_mask; break;
-                case QUEEN: white_queens ^= move_mask; break;
-                case KING: white_king ^= move_mask; break;
-                case EMPTY: break;
-            }
-        }else{
-            switch(moved_piece){
-                case PAWN: black_pawns ^= move_mask; break;
-                case KNIGHT: black_knights ^= move_mask; break;
-                case BISHOP: black_bishops ^= move_mask; break;
-                case ROOK: black_rooks ^= move_mask; break;
-                case QUEEN: black_queens ^= move_mask; break;
-                case KING: black_king ^= move_mask; break;
-                case EMPTY: break;
-            }
-        }
+        toggle_piece(moved_piece, white_to_move, move_mask);
 
         if(captured_piece != EMPTY && flags != EP_CAPTURE){
-            uint64_t capture_mask = ~(1ULL << to);
+            remove_piece(to, captured_piece, !white_to_move);
+        }
 
-            if(white_to_move){
-                switch(captured_piece){
-                    case PAWN: black_pawns &= capture_mask; break;
-                    case KNIGHT: black_knights &= capture_mask; break;
-                    case BISHOP: black_bishops &= capture_mask; break;
-                    case ROOK: black_rooks &= capture_mask; break;
-                    case QUEEN: black_queens &= capture_mask; break;
-                    case KING: black_king &= capture_mask; break;
-                    case EMPTY: break;
-                }
-            }else{
-                switch(captured_piece){
-                    case PAWN: white_pawns &= capture_mask; break;
-                    case KNIGHT: white_knights &= capture_mask; break;
-                    case BISHOP: white_bishops &= capture_mask; break;
-                    case ROOK: white_rooks &= capture_mask; break;
-                    case QUEEN: white_queens &= capture_mask; break;
-                    case KING: white_king &= capture_mask; break;
-                    case EMPTY: break;
-                }
-            }
+        if(captured_piece != EMPTY && flags == EP_CAPTURE){
+            //implementa la logica...
         }
 
         //devo implementare TUTTI i flags...
@@ -360,7 +420,49 @@
         white_to_move = !white_to_move;
     }
 
-    //da implementare unmake move!!!!!
+    void Board::unmake_move(Move move){
+        BoardState prev_state = history.back();
+        history.pop_back();
+
+        castling_rights = prev_state.castling_rights;
+        en_passant_target = prev_state.en_passant_target;
+        white_to_move = !white_to_move;
+
+        int flag = get_move_flags(move);
+        int from = get_move_from(move);
+        int to = get_move_to(move);
+
+        PieceType moved_piece = get_piece_at(to, white_to_move);
+
+        if(flag >= PROMO_KNIGHT){
+            moved_piece = PAWN;
+            
+            remove_piece(to, get_piece_at(to, white_to_move), white_to_move);
+            place_piece(from, PAWN, white_to_move);
+        }else{
+            uint64_t move_mask = (1ULL << from) | (1ULL << to);
+            toggle_piece(moved_piece, white_to_move, move_mask);
+        }
+
+        if(prev_state.captured_piece != EMPTY){
+            place_piece(prev_state.captured_square, prev_state.captured_piece, prev_state.piece_was_white);
+        }
+
+        if (flag == KING_CASTLE) {
+            if (white_to_move) {
+            
+                white_rooks ^= (1ULL << 5) | (1ULL << 7);
+            } else {
+                black_rooks ^= (1ULL << 61) | (1ULL << 63);
+            }
+        } else if (flag == QUEEN_CASTLE) {
+            if (white_to_move) {
+                white_rooks ^= (1ULL << 3) | (1ULL << 0);
+            } else {
+                black_rooks ^= (1ULL << 59) | (1ULL << 56);
+            }
+        }
+    }
 
     std::vector<Move> Board::generate_all_moves(){
         std::vector<Move> moves;
@@ -370,7 +472,7 @@
         uint64_t knights = white_to_move ? white_knights : black_knights;
         while(knights){
             int from = pop_lsb(knights);
-            uint64_t attacks = knight_moves(from);
+            uint64_t attacks = pseudolegal_knight_moves(from);
 
             while(attacks){
                 int to = pop_lsb(attacks);
@@ -384,7 +486,7 @@
         uint64_t bishops = white_to_move ? white_bishops : black_bishops;
         while(bishops){
             int from = pop_lsb(bishops);
-            uint64_t attacks = bishop_moves(from);
+            uint64_t attacks = pseudolegal_bishop_moves(from);
 
             while(attacks){
                 int to = pop_lsb(attacks);
@@ -398,7 +500,7 @@
         uint64_t rooks = white_to_move ? white_rooks : black_rooks;
         while(rooks){
             int from = pop_lsb(rooks);
-            uint64_t attacks = rook_moves(from);
+            uint64_t attacks = pseudolegal_rook_moves(from);
 
             while(attacks){
                 int to = pop_lsb(attacks);
@@ -412,7 +514,7 @@
         uint64_t queens = white_to_move ? white_queens : black_queens;
         while(queens){
             int from = pop_lsb(queens);
-            uint64_t attacks = queen_moves(from);
+            uint64_t attacks = pseudolegal_queen_moves(from);
 
             while(attacks){
                 int to = pop_lsb(attacks);
@@ -421,6 +523,21 @@
 
                 moves.push_back(encode_move(from, to, flag));
             }
+        }
+
+        PawnMoves pawn_moves = pseudolegal_pawn_moves();
+        while(pawn_moves.single_push){
+                int to = pop_lsb(pawn_moves.single_push);
+                int from = white_to_move ? to - 8 : to + 8;
+
+                moves.push_back(encode_move(from, to, QUIET_MOVE));
+        }
+
+        while(pawn_moves.double_push){
+                int to = pop_lsb(pawn_moves.double_push);
+                int from = white_to_move ? to - 16 : to + 16;
+
+                moves.push_back(encode_move(from, to, QUIET_MOVE));
         }
 
         

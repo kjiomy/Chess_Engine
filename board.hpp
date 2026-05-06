@@ -25,18 +25,22 @@ class Board{
         void print_bitboard(uint64_t);
         void print_board();
 
-        uint64_t knight_moves(uint8_t square);
-        uint64_t rook_moves(uint8_t square);
-        uint64_t bishop_moves(uint8_t square);
-        uint64_t queen_moves(uint8_t square);
-        // No castling yet!!!
-        uint64_t king_moves(uint8_t square);
-        PawnMoves pawn_moves();
+        uint64_t pseudolegal_knight_moves(uint8_t square);
+        uint64_t pseudolegal_rook_moves(uint8_t square);
+        uint64_t pseudolegal_bishop_moves(uint8_t square);
+        uint64_t pseudolegal_queen_moves(uint8_t square);
+        uint64_t pseudolegal_king_moves(uint8_t square);
+        PawnMoves pseudolegal_pawn_moves();
+
+        void toggle_piece(PieceType piece, bool is_white, uint64_t mask);
+        void place_piece(int square, PieceType piece, bool is_white);
+        void remove_piece(int square, PieceType piece, bool is_white);
 
         PieceType get_piece_at(uint8_t square, bool check_white);
         bool is_square_attacked(uint8_t square);
 
         void make_move(Move move);
+        void unmake_move(Move move);
 
         std::vector<Move> generate_all_moves();
 

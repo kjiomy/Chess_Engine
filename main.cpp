@@ -26,14 +26,32 @@ Iter select_randomly(Iter start, Iter end) {
 
 using namespace std;
 
+int perft(Board &board, int depth){
+    if (depth == 0) return 1;
+
+    int nodes = 0;
+    vector<Move> moves = board.generate_all_moves();
+
+    for(Move m : moves){
+        board.make_move(m);
+        nodes += perft(board, depth - 1);
+        board.unmake_move(m);
+    }
+
+    return nodes;
+}
+
 int main(){
     Board currentBoard;
 
     std::vector<Move> mosse;
 
+
     currentBoard.print_board();
 
+    cout << perft(currentBoard, 1) << endl;
 
+    
     for(int i = 0; i < 20; i++){
         mosse = currentBoard.generate_all_moves();
 

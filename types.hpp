@@ -40,7 +40,9 @@ enum PieceType { EMPTY, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 struct BoardState{
     uint8_t castling_rights;
     uint64_t en_passant_target;
-    int captured_pieces;
+    int captured_square;
+    PieceType captured_piece;
+    bool piece_was_white;
 };
 
 struct PawnMoves{
