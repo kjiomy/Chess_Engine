@@ -525,21 +525,67 @@
             }
         }
 
+
+        // Adding all the various pawn moves... so many...
+
         PawnMoves pawn_moves = pseudolegal_pawn_moves();
         while(pawn_moves.single_push){
-                int to = pop_lsb(pawn_moves.single_push);
-                int from = white_to_move ? to - 8 : to + 8;
+            int to = pop_lsb(pawn_moves.single_push);
+            int from = white_to_move ? to - 8 : to + 8;
 
-                moves.push_back(encode_move(from, to, QUIET_MOVE));
+            moves.push_back(encode_move(from, to, QUIET_MOVE));
         }
 
         while(pawn_moves.double_push){
-                int to = pop_lsb(pawn_moves.double_push);
-                int from = white_to_move ? to - 16 : to + 16;
+            int to = pop_lsb(pawn_moves.double_push);
+            int from = white_to_move ? to - 16 : to + 16;
 
-                moves.push_back(encode_move(from, to, QUIET_MOVE));
+            moves.push_back(encode_move(from, to, QUIET_MOVE));
         }
 
-        
+        while(pawn_moves.capture_left){
+            int to = pop_lsb(pawn_moves.capture_left);
+            int from = white_to_move ? to - 7 : to + 7;
+            int flag = to & en_passant_target ? EP_CAPTURE : CAPTURE;
+
+            moves.push_back(encode_move(from, to, flag));
+        }
+
+        while(pawn_moves.capture_right){
+            int to = pop_lsb(pawn_moves.capture_right);
+            int from = white_to_move ? to - 9 : to + 9;
+            int flag = to & en_passant_target ? EP_CAPTURE : CAPTURE;
+
+            moves.push_back(encode_move(from, to, flag));
+        }
+
+        // Adding the king moves
+
+        uint64_t king = white_to_move ? white_king : black_king;
+        while(king){
+            int from = pop_lsb(king);
+            uint64_t attacks = pseudolegal_king_moves(from);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+                
+                if(white_to_move){
+                    if(from == 4){
+                        if(to == 2) flag = QUEEN_CASTLE;
+                        if(to == 6) flag = KING_CASTLE;
+                    }
+                }else{
+                    if(from == 60){
+                        if(to == 58) flag = QUEEN_CASTLE;
+                        if(to == 62) flag = KING_CASTLE;
+                    }
+                }
+
+                moves.push_back(encode_move(from, to, flag));
+            }
+        }
+
         return moves;
     }

@@ -47,21 +47,28 @@ int main(){
     std::vector<Move> mosse;
 
 
-    currentBoard.print_board();
+    //currentBoard.print_board();
 
-    cout << perft(currentBoard, 1) << endl;
+    for(int i = 0; i < 5; i++){
+        cout << "perft " << i << ": " << perft(currentBoard, i) << endl;
+    }
 
+    
+
+    /*
     
     for(int i = 0; i < 20; i++){
         mosse = currentBoard.generate_all_moves();
 
         Move mossa = *select_randomly(mosse.begin(), mosse.end());
 
+        cout << endl << get_move_from(mossa) << " : " << get_move_to(mossa) << ", " << get_move_flags(mossa) << endl << endl;
+
         currentBoard.make_move(mossa);
 
         currentBoard.print_board();
     }
-
+*/
     
     
 
