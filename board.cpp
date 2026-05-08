@@ -430,7 +430,8 @@
         }
 
         BoardState current_state = {castling_rights, en_passant_target, captured_square, captured_piece, !white_to_move};
-        history.push_back(current_state);
+        history[history_count] = current_state;
+        history_count++;
 
         en_passant_target = 0;
 
@@ -556,8 +557,8 @@
     }
 
     void Board::unmake_move(Move move){
-        BoardState prev_state = history.back();
-        history.pop_back();
+        history_count--;
+        BoardState prev_state = history[history_count];
 
         castling_rights = prev_state.castling_rights;
         en_passant_target = prev_state.en_passant_target;
@@ -599,10 +600,7 @@
         }
     }
 
-    std::vector<Move> Board::generate_all_moves(){
-        std::vector<Move> moves;
-        moves.reserve(256);
-
+    void Board::generate_all_moves(MoveList &list){
         uint64_t enemy_pieces = white_to_move ? black_pieces() : white_pieces();
         uint64_t knights = white_to_move ? white_knights : black_knights;
         while(knights){
@@ -614,7 +612,7 @@
 
                 int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
 
-                moves.push_back(encode_move(from, to, flag));
+                list.push(encode_move(from, to, flag));
             }
         }
 
@@ -628,7 +626,7 @@
 
                 int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
 
-                moves.push_back(encode_move(from, to, flag));
+                list.push(encode_move(from, to, flag));
             }
         }
 
@@ -642,7 +640,7 @@
 
                 int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
 
-                moves.push_back(encode_move(from, to, flag));
+                list.push(encode_move(from, to, flag));
             }
         }
 
@@ -656,7 +654,7 @@
 
                 int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
 
-                moves.push_back(encode_move(from, to, flag));
+                list.push(encode_move(from, to, flag));
             }
         }
 
@@ -670,12 +668,12 @@
             uint64_t rank_mask = white_to_move ? MASK_8_RANK : MASK_1_RANK;
 
             if((1ULL << to) & rank_mask){
-                moves.push_back(encode_move(from, to, PROMO_KNIGHT));
-                moves.push_back(encode_move(from, to, PROMO_BISHOP));
-                moves.push_back(encode_move(from, to, PROMO_ROOK));
-                moves.push_back(encode_move(from, to, PROMO_QUEEN));
+                list.push(encode_move(from, to, PROMO_KNIGHT));
+                list.push(encode_move(from, to, PROMO_BISHOP));
+                list.push(encode_move(from, to, PROMO_ROOK));
+                list.push(encode_move(from, to, PROMO_QUEEN));
             }else{
-                moves.push_back(encode_move(from, to, QUIET_MOVE));
+                list.push(encode_move(from, to, QUIET_MOVE));
             }   
         }
 
@@ -683,7 +681,7 @@
             int to = pop_lsb(pawn_moves.double_push);
             int from = white_to_move ? to - 16 : to + 16;
 
-            moves.push_back(encode_move(from, to, DOUBLE_PAWN_PUSH));
+            list.push(encode_move(from, to, DOUBLE_PAWN_PUSH));
         }
 
         while(pawn_moves.capture_left){
@@ -693,12 +691,12 @@
             uint64_t rank_mask = white_to_move ? MASK_8_RANK : MASK_1_RANK;
 
             if((1ULL << to) & rank_mask){
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_BISHOP));
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_ROOK));
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_QUEEN));
+                list.push(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
+                list.push(encode_move(from, to, PROMO_CAPTURE_BISHOP));
+                list.push(encode_move(from, to, PROMO_CAPTURE_ROOK));
+                list.push(encode_move(from, to, PROMO_CAPTURE_QUEEN));
             }else{
-                moves.push_back(encode_move(from, to, flag));
+                list.push(encode_move(from, to, flag));
             }
         }
 
@@ -710,16 +708,14 @@
             uint64_t rank_mask = white_to_move ? MASK_8_RANK : MASK_1_RANK;
 
             if((1ULL << to) & rank_mask){
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_BISHOP));
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_ROOK));
-                moves.push_back(encode_move(from, to, PROMO_CAPTURE_QUEEN));
+                list.push(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
+                list.push(encode_move(from, to, PROMO_CAPTURE_BISHOP));
+                list.push(encode_move(from, to, PROMO_CAPTURE_ROOK));
+                list.push(encode_move(from, to, PROMO_CAPTURE_QUEEN));
             }else{
-                moves.push_back(encode_move(from, to, flag));
+                list.push(encode_move(from, to, flag));
             }
         }
-
-        // Adding the king moves
 
         // Adding the king moves
         uint64_t king = white_to_move ? white_king : black_king;
@@ -758,35 +754,9 @@
                 }
 
                 if (can_castle) {
-                    moves.push_back(encode_move(from, to, flag));
+                    list.push(encode_move(from, to, flag));
                 }
             }
         }
 
-        // Cheking if moves are illegal and removing them...
-
-        
-        std::vector<Move> legal_moves;
-
-        for(Move m : moves){
-            make_move(m);
-
-            bool moving_side = !white_to_move;
-            uint64_t king_bitboard = moving_side ? white_king : black_king;
-
-            if(king_bitboard == 0){
-                unmake_move(m);
-                continue;
-            }
-
-            uint8_t king_square = __builtin_ctzll(king_bitboard);
-
-            if(!is_square_attacked(king_square, white_to_move)){
-                legal_moves.push_back(m);
-            }
-
-            unmake_move(m);
-        }
-
-        return legal_moves;
     }

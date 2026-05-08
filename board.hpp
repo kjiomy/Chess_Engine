@@ -42,8 +42,9 @@ class Board{
         void make_move(Move move);
         void unmake_move(Move move);
 
-        std::vector<Move> generate_all_moves();
+        void generate_all_moves(MoveList &list);
 
     private:
-        std::vector<BoardState> history;
+        BoardState history[512];
+        int history_count = 0;
 };

@@ -82,3 +82,15 @@ inline int pop_lsb(uint64_t& bb){
 
     return lsb;
 }
+
+// Adding a static structure to use instead of vector, cutting off much memory waste..
+
+struct MoveList{
+    Move moves[256]; // Theoretical maximum is 218
+    int count = 0;
+    
+    void push(Move m){
+        moves[count] = m;
+        count++;
+    }
+};

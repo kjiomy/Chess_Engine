@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include "board.hpp"
 #include "uci.hpp"
 
@@ -26,15 +27,38 @@ Iter select_randomly(Iter start, Iter end) {
 
 using namespace std;
 
+// Moving the legality check in the perft to avoid wasting memory
+
 int perft(Board &board, int depth){
     if (depth == 0) return 1;
 
     int nodes = 0;
-    vector<Move> moves = board.generate_all_moves();
 
-    for(Move m : moves){
+    MoveList move_list;
+    board.generate_all_moves(move_list);
+
+
+    for(int i = 0; i < move_list.count; i++){
+        Move m = move_list.moves[i];
+
         board.make_move(m);
-        nodes += perft(board, depth - 1);
+
+        bool moving_side = !board.white_to_move;
+        uint64_t king = moving_side ? board.white_king : board.black_king;
+
+        if(king != 0){
+            uint8_t king_square = __builtin_ctzll(king);
+
+            if(!board.is_square_attacked(king_square, board.white_to_move)){
+                if(depth == 1){
+                    nodes++;
+                }else{
+                    nodes += perft(board, depth - 1);   
+                }
+                
+            }
+        }   
+
         board.unmake_move(m);
     }
 
@@ -46,12 +70,22 @@ int main(){
 
     std::vector<Move> mosse;
 
+    currentBoard.print_board();
+    cout << "---------------------------------" << endl;
 
-    //currentBoard.print_board();
+    int max_depth = 7;
 
+    for(int i = 0; i < max_depth; i++){
+        auto start_time = chrono::high_resolution_clock::now();
+        uint64_t nodes = perft(currentBoard, i);
+        auto end_time = chrono::high_resolution_clock::now();
 
-    for(int i = 0; i < 7; i++){
-        cout << "perft " << i << ": " << perft(currentBoard, i) << endl;
+        chrono::duration<double> elapsed = end_time - start_time;
+        double seconds = elapsed.count();
+
+        uint64_t nps = (seconds > 0.0) ? (nodes / seconds) : 0;
+
+        cout << "Depth " << max_depth << " | Nodes: " << nodes << " | Time: " << seconds << " s" << " | NPS: " << nps << endl;
     }
 
     
