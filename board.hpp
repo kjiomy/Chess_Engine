@@ -39,12 +39,9 @@ class Board{
         PieceType get_piece_at(uint8_t square, bool check_white);
         bool is_square_attacked(uint8_t square, bool is_white);
 
-        void make_move(Move move);
-        void unmake_move(Move move);
+        BoardState make_move(Move move);
+        void unmake_move(Move move, BoardState prev_state);
 
         void generate_all_moves(MoveList &list);
 
-    private:
-        BoardState history[512];
-        int history_count = 0;
 };

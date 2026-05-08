@@ -413,7 +413,7 @@
 
     
     //da finire con tutti i vari flag ecc...
-    void Board::make_move(Move move){
+    BoardState Board::make_move(Move move){
         int flags = get_move_flags(move);
         int from = get_move_from(move);
         int to = get_move_to(move);
@@ -430,8 +430,7 @@
         }
 
         BoardState current_state = {castling_rights, en_passant_target, captured_square, captured_piece, !white_to_move};
-        history[history_count] = current_state;
-        history_count++;
+        
 
         en_passant_target = 0;
 
@@ -554,11 +553,11 @@
         if(from == 60) castling_rights &= ~(BK | BQ);
 
         white_to_move = !white_to_move;
+
+        return current_state;
     }
 
-    void Board::unmake_move(Move move){
-        history_count--;
-        BoardState prev_state = history[history_count];
+    void Board::unmake_move(Move move, BoardState prev_state){
 
         castling_rights = prev_state.castling_rights;
         en_passant_target = prev_state.en_passant_target;
