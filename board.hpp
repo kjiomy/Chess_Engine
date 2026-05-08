@@ -37,7 +37,7 @@ class Board{
         void remove_piece(int square, PieceType piece, bool is_white);
 
         PieceType get_piece_at(uint8_t square, bool check_white);
-        bool is_square_attacked(uint8_t square);
+        bool is_square_attacked(uint8_t square, bool is_white);
 
         void make_move(Move move);
         void unmake_move(Move move);

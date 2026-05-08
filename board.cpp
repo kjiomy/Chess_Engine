@@ -213,13 +213,11 @@
             if(square == 4){
                 // King side
                 if((castling_rights & WK) && !(occupied_squares & (1ULL  << 5 | 1ULL << 6))){
-                    // Da aggiungere se lo square è attaccato!!!!
                     attacks |= (1ULL << 6);
                 }
 
                 // Queen side
                 if((castling_rights & WQ) && !(occupied_squares & (1ULL  << 3 | 1ULL << 2 | 1ULL << 1))){
-                    // Da aggiungere se lo square è attaccato!!!!!
                     attacks |= (1ULL << 2);
                 }
             }
@@ -228,12 +226,10 @@
             if(square == 60){
                 // King side
                 if((castling_rights & BK) && !(occupied_squares &(1ULL << 61 | 1ULL << 62))){
-                    // Da aggiungere Square attaccato!!!
                     attacks |= (1ULL << 62);
                 }
 
                 if((castling_rights & BQ) && !(occupied_squares &(1ULL << 59 | 1ULL << 58 | 1ULL << 57))){
-                    //logica attaccato!!!!
                     attacks |= (1ULL << 58);
                 }
             }
@@ -373,7 +369,49 @@
         return EMPTY;
     }
    
+    bool Board::is_square_attacked(uint8_t square, bool is_white){
+        // Salviamo di chi è effettivamente il turno
+        bool original_turn = white_to_move;
+        
+        // TRICK: Impostiamo il turno al colore del DIFENSORE (!is_white)
+        // Così le funzioni pseudolegali sapranno chi "blocca" i raggi e chi no.
+        white_to_move = !is_white;
+
+        uint64_t enemy_knights = is_white ? white_knights : black_knights;
+        uint64_t enemy_bishops = is_white ? white_bishops : black_bishops;
+        uint64_t enemy_rooks   = is_white ? white_rooks   : black_rooks;
+        uint64_t enemy_queens  = is_white ? white_queens  : black_queens;
+        uint64_t enemy_king    = is_white ? white_king    : black_king;
+        uint64_t enemy_pawns   = is_white ? white_pawns   : black_pawns;
+
+        bool attacked = false;
+
+        // Ora i raggi partiranno dal Re e si fermeranno correttamente sui pezzi nemici!
+        if (pseudolegal_knight_moves(square) & enemy_knights) attacked = true;
+        else if (pseudolegal_bishop_moves(square) & (enemy_bishops | enemy_queens)) attacked = true;
+        else if (pseudolegal_rook_moves(square) & (enemy_rooks | enemy_queens)) attacked = true;
+        else if (pseudolegal_king_moves(square) & enemy_king) attacked = true;
+
+        // Logica manuale dei pedoni (non è influenzata dal trick, quindi è sicura)
+        uint64_t sq_bit = 1ULL << square;
+        if (!attacked) {
+            if (is_white) {
+                if ((sq_bit >> 7) & NOT_A_FILE & enemy_pawns) attacked = true;
+                if ((sq_bit >> 9) & NOT_H_FILE & enemy_pawns) attacked = true;
+            } else {
+                if ((sq_bit << 7) & NOT_H_FILE & enemy_pawns) attacked = true;
+                if ((sq_bit << 9) & NOT_A_FILE & enemy_pawns) attacked = true;
+            }
+        }
+
+        // Ripristiniamo il turno originale per non corrompere la partita
+        white_to_move = original_turn;
+
+        return attacked;
+    }
    
+
+    
     //da finire con tutti i vari flag ecc...
     void Board::make_move(Move move){
         int flags = get_move_flags(move);
@@ -391,32 +429,129 @@
             captured_piece  = get_piece_at(to, !white_to_move);
         }
 
-
         BoardState current_state = {castling_rights, en_passant_target, captured_square, captured_piece, !white_to_move};
         history.push_back(current_state);
 
         en_passant_target = 0;
 
-        uint64_t move_mask = (1ULL << from) |  (1ULL << to);
+        // Implementing all the flags...
 
-        toggle_piece(moved_piece, white_to_move, move_mask);
+        uint64_t move_mask;
 
-        if(captured_piece != EMPTY && flags != EP_CAPTURE){
-            remove_piece(to, captured_piece, !white_to_move);
+        switch(flags){
+            case QUIET_MOVE:
+                move_mask = (1ULL << from) |  (1ULL << to);
+                toggle_piece(moved_piece, white_to_move, move_mask);
+                break;
+
+            case DOUBLE_PAWN_PUSH:
+                en_passant_target = white_to_move ? (1ULL << (from + 8)) : (1ULL << (from - 8));
+                move_mask = (1ULL << from) |  (1ULL << to);
+                toggle_piece(moved_piece, white_to_move, move_mask);
+                break;
+            
+            case KING_CASTLE:
+                if(white_to_move){
+                    move_mask = (1ULL << from) |  (1ULL << to);
+                    toggle_piece(moved_piece, white_to_move, move_mask);
+
+                    uint64_t king_castle_mask = 0x00000000000000A0;
+                    toggle_piece(ROOK, white_to_move, king_castle_mask);
+                    castling_rights = castling_rights &= ~(WK | WQ);
+                }else{
+                    move_mask = (1ULL << from) |  (1ULL << to);
+                    toggle_piece(moved_piece, white_to_move, move_mask);
+
+                    uint64_t king_castle_mask = 0xA000000000000000;
+                    toggle_piece(ROOK, white_to_move, king_castle_mask);
+                    castling_rights = castling_rights &= ~(BK | BQ);
+                }
+                break;
+
+            case QUEEN_CASTLE:
+                if(white_to_move){
+                    move_mask = (1ULL << from) |  (1ULL << to);
+                    toggle_piece(moved_piece, white_to_move, move_mask);
+
+                    uint64_t queen_castle_mask = 0x0000000000000009;
+                    toggle_piece(ROOK, white_to_move, queen_castle_mask);
+                    castling_rights = castling_rights &= ~(WQ | WK);
+                }else{
+                    move_mask = (1ULL << from) |  (1ULL << to);
+                    toggle_piece(moved_piece, white_to_move, move_mask);
+
+                    uint64_t queen_castle_mask = 0x0900000000000000;
+                    toggle_piece(ROOK, white_to_move, queen_castle_mask);
+                    castling_rights = castling_rights &= ~(BQ | BK);
+                }
+                break;
+
+            case CAPTURE:
+                remove_piece(captured_square, captured_piece, !white_to_move);
+                move_mask = (1ULL << from) |  (1ULL << to);
+                toggle_piece(moved_piece, white_to_move, move_mask);
+                break;
+
+            case EP_CAPTURE:
+                remove_piece(captured_square, captured_piece, !white_to_move);
+                move_mask = (1ULL << from) |  (1ULL << to);
+                toggle_piece(moved_piece, white_to_move, move_mask);
+                break;
+
+            case PROMO_KNIGHT:
+                remove_piece(from, PAWN, white_to_move);
+                place_piece(to, KNIGHT, white_to_move);
+                break;
+
+            case PROMO_BISHOP:
+                remove_piece(from, PAWN, white_to_move);
+                place_piece(to, BISHOP, white_to_move);
+                break;
+            
+            case PROMO_ROOK:
+                remove_piece(from, PAWN, white_to_move);
+                place_piece(to, ROOK, white_to_move);
+                break;
+            
+            case PROMO_QUEEN:
+                remove_piece(from, PAWN, white_to_move);
+                place_piece(to, QUEEN, white_to_move);
+                break;
+
+            case PROMO_CAPTURE_KNIGHT:
+                remove_piece(from, PAWN, white_to_move);
+                remove_piece(captured_square, captured_piece, !white_to_move);
+                place_piece(to, KNIGHT, white_to_move);
+                break;
+
+            case PROMO_CAPTURE_BISHOP:
+                remove_piece(from, PAWN, white_to_move);
+                remove_piece(captured_square, captured_piece, !white_to_move);
+                place_piece(to, BISHOP, white_to_move);
+                break;
+
+            case PROMO_CAPTURE_ROOK:
+                remove_piece(from, PAWN, white_to_move);
+                remove_piece(captured_square, captured_piece, !white_to_move);
+                place_piece(to, ROOK, white_to_move);
+                break;
+
+            case PROMO_CAPTURE_QUEEN:
+                remove_piece(from, PAWN, white_to_move);
+                remove_piece(captured_square, captured_piece, !white_to_move);
+                place_piece(to, QUEEN, white_to_move);
+                break;
         }
 
-        if(captured_piece != EMPTY && flags == EP_CAPTURE){
-            //implementa la logica...
-        }
+        // Updating castling rights
 
-        //devo implementare TUTTI i flags...
-        if(flags == DOUBLE_PAWN_PUSH){
-            en_passant_target = white_to_move ? (1ULL << (from + 8)) : (1ULL << (from - 8));
-        }else if(flags == KING_CASTLE){
+        if(from == 0 || to == 0) castling_rights &= ~WQ;
+        if(from == 7 || to == 7) castling_rights &= ~WK;
+        if(from == 56 || to == 56) castling_rights &= ~BQ;
+        if(from == 63 || to == 63) castling_rights &= ~BK;
+        if(from == 4) castling_rights &= ~(WK | WQ);
+        if(from == 60) castling_rights &= ~(BK | BQ);
 
-        }
-
-        //aggiornare i diritti di arrocco!!!;
         white_to_move = !white_to_move;
     }
 
@@ -532,35 +667,61 @@
         while(pawn_moves.single_push){
             int to = pop_lsb(pawn_moves.single_push);
             int from = white_to_move ? to - 8 : to + 8;
+            uint64_t rank_mask = white_to_move ? MASK_8_RANK : MASK_1_RANK;
 
-            moves.push_back(encode_move(from, to, QUIET_MOVE));
+            if((1ULL << to) & rank_mask){
+                moves.push_back(encode_move(from, to, PROMO_KNIGHT));
+                moves.push_back(encode_move(from, to, PROMO_BISHOP));
+                moves.push_back(encode_move(from, to, PROMO_ROOK));
+                moves.push_back(encode_move(from, to, PROMO_QUEEN));
+            }else{
+                moves.push_back(encode_move(from, to, QUIET_MOVE));
+            }   
         }
 
         while(pawn_moves.double_push){
             int to = pop_lsb(pawn_moves.double_push);
             int from = white_to_move ? to - 16 : to + 16;
 
-            moves.push_back(encode_move(from, to, QUIET_MOVE));
+            moves.push_back(encode_move(from, to, DOUBLE_PAWN_PUSH));
         }
 
         while(pawn_moves.capture_left){
             int to = pop_lsb(pawn_moves.capture_left);
             int from = white_to_move ? to - 7 : to + 7;
-            int flag = to & en_passant_target ? EP_CAPTURE : CAPTURE;
+            int flag = (1ULL << to) & en_passant_target ? EP_CAPTURE : CAPTURE;
+            uint64_t rank_mask = white_to_move ? MASK_8_RANK : MASK_1_RANK;
 
-            moves.push_back(encode_move(from, to, flag));
+            if((1ULL << to) & rank_mask){
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_BISHOP));
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_ROOK));
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_QUEEN));
+            }else{
+                moves.push_back(encode_move(from, to, flag));
+            }
         }
 
         while(pawn_moves.capture_right){
             int to = pop_lsb(pawn_moves.capture_right);
             int from = white_to_move ? to - 9 : to + 9;
-            int flag = to & en_passant_target ? EP_CAPTURE : CAPTURE;
+            int flag = ((1ULL << to) & en_passant_target) ? EP_CAPTURE : CAPTURE;
 
-            moves.push_back(encode_move(from, to, flag));
+            uint64_t rank_mask = white_to_move ? MASK_8_RANK : MASK_1_RANK;
+
+            if((1ULL << to) & rank_mask){
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_BISHOP));
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_ROOK));
+                moves.push_back(encode_move(from, to, PROMO_CAPTURE_QUEEN));
+            }else{
+                moves.push_back(encode_move(from, to, flag));
+            }
         }
 
         // Adding the king moves
 
+        // Adding the king moves
         uint64_t king = white_to_move ? white_king : black_king;
         while(king){
             int from = pop_lsb(king);
@@ -568,24 +729,64 @@
 
             while(attacks){
                 int to = pop_lsb(attacks);
-
                 int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
                 
+                bool can_castle = true;
+
                 if(white_to_move){
                     if(from == 4){
-                        if(to == 2) flag = QUEEN_CASTLE;
-                        if(to == 6) flag = KING_CASTLE;
+                        if(to == 2) {
+                            flag = QUEEN_CASTLE;
+                            if(is_square_attacked(4, false) || is_square_attacked(3, false)) can_castle = false;
+                        }
+                        if(to == 6) {
+                            flag = KING_CASTLE;
+                            if(is_square_attacked(4, false) || is_square_attacked(5, false)) can_castle = false;
+                        }
                     }
                 }else{
                     if(from == 60){
-                        if(to == 58) flag = QUEEN_CASTLE;
-                        if(to == 62) flag = KING_CASTLE;
+                        if(to == 58) {
+                            flag = QUEEN_CASTLE;
+                            if(is_square_attacked(60, true) || is_square_attacked(59, true)) can_castle = false;
+                        }
+                        if(to == 62) {
+                            flag = KING_CASTLE;
+                            if(is_square_attacked(60, true) || is_square_attacked(61, true)) can_castle = false;
+                        }
                     }
                 }
 
-                moves.push_back(encode_move(from, to, flag));
+                if (can_castle) {
+                    moves.push_back(encode_move(from, to, flag));
+                }
             }
         }
 
-        return moves;
+        // Cheking if moves are illegal and removing them...
+
+        
+        std::vector<Move> legal_moves;
+
+        for(Move m : moves){
+            make_move(m);
+
+            bool moving_side = !white_to_move;
+            uint64_t king_bitboard = moving_side ? white_king : black_king;
+
+            if(king_bitboard == 0){
+                unmake_move(m);
+                continue;
+            }
+
+            uint8_t king_square = __builtin_ctzll(king_bitboard);
+
+            if(!is_square_attacked(king_square, white_to_move)){
+                legal_moves.push_back(m);
+            }
+
+            unmake_move(m);
+        }
+
+        return legal_moves;
     }

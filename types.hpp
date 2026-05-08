@@ -4,6 +4,8 @@ constexpr uint64_t NOT_H_FILE = 0x7F7F7F7F7F7F7F7F;
 constexpr uint64_t NOT_AB_FILE = 0xFCFCFCFCFCFCFCFC;
 constexpr uint64_t NOT_GH_FILE = 0x3F3F3F3F3F3F3F3F;
 constexpr uint64_t MASK_64 = 0xFFFFFFFFFFFFFFFF;
+constexpr uint64_t MASK_8_RANK = 0xFF00000000000000;
+constexpr uint64_t MASK_1_RANK = 0x00000000000000FF;
 
 typedef uint16_t Move;
 

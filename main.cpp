@@ -49,14 +49,15 @@ int main(){
 
     //currentBoard.print_board();
 
-    for(int i = 0; i < 5; i++){
+
+    for(int i = 0; i < 7; i++){
         cout << "perft " << i << ": " << perft(currentBoard, i) << endl;
     }
 
     
 
-    /*
     
+    /*
     for(int i = 0; i < 20; i++){
         mosse = currentBoard.generate_all_moves();
 
@@ -68,7 +69,7 @@ int main(){
 
         currentBoard.print_board();
     }
-*/
+    */
     
     
 
