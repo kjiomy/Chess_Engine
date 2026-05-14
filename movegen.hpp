@@ -11,4 +11,5 @@ namespace MoveGen{
         return pseudolegal_rook_moves(square, board) | pseudolegal_bishop_moves(square, board);
     }
     uint64_t pseudolegal_king_moves(uint8_t square, Board &board);
+    PawnMoves pseudolegal_pawn_moves(Board &board);
 }

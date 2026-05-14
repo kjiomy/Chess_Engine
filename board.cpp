@@ -90,38 +90,6 @@
 
 
 
-// Functions to calculate the pseudo-legal moves for every piece
-
-    PawnMoves Board::pseudolegal_pawn_moves(){
-        PawnMoves moves;
-        
-        if(white_to_move){
-            uint64_t empty = empty_squares();
-            uint64_t enemy = black_pieces() | en_passant_target;
-
-
-            moves.single_push = (white_pawns << 8) & empty;
-            moves.double_push = ((moves.single_push & 0x0000000000FF0000) << 8) & empty;
-
-            moves.capture_left = (white_pawns << 7) & NOT_H_FILE & enemy;
-            moves.capture_right = (white_pawns << 9) & NOT_A_FILE & enemy;
-        return moves;
-        }else {
-            uint64_t empty = empty_squares();
-            uint64_t enemy = white_pieces() | en_passant_target;
-
-
-            moves.single_push = (black_pawns >> 8) & empty;
-            moves.double_push = ((moves.single_push & 0x0000FF0000000000) >> 8) & empty;
-
-            moves.capture_left = (black_pawns >> 7) & NOT_A_FILE & enemy;
-            moves.capture_right = (black_pawns >> 9) & NOT_H_FILE & enemy;
-            return moves;
-        }
-    }
-
-
-
     void Board::place_piece(int square, PieceType piece, bool is_white){
         uint64_t place_mask = 1ULL << square;
 
@@ -513,7 +481,7 @@
 
         // Adding all the various pawn moves... so many...
 
-        PawnMoves pawn_moves = pseudolegal_pawn_moves();
+        PawnMoves pawn_moves = MoveGen::pseudolegal_pawn_moves(*this);
         while(pawn_moves.single_push){
             int to = pop_lsb(pawn_moves.single_push);
             int from = white_to_move ? to - 8 : to + 8;

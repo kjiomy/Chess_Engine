@@ -126,4 +126,32 @@ namespace MoveGen{
 
         return attacks;
     }
+
+    PawnMoves pseudolegal_pawn_moves(Board &board){
+        PawnMoves moves;
+        
+        if(board.white_to_move){
+            uint64_t empty = board.empty_squares();
+            uint64_t enemy = board.black_pieces() | board.en_passant_target;
+
+
+            moves.single_push = (board.white_pawns << 8) & empty;
+            moves.double_push = ((moves.single_push & 0x0000000000FF0000) << 8) & empty;
+
+            moves.capture_left = (board.white_pawns << 7) & NOT_H_FILE & enemy;
+            moves.capture_right = (board.white_pawns << 9) & NOT_A_FILE & enemy;
+        return moves;
+        }else {
+            uint64_t empty = board.empty_squares();
+            uint64_t enemy = board.white_pieces() | board.en_passant_target;
+
+
+            moves.single_push = (board.black_pawns >> 8) & empty;
+            moves.double_push = ((moves.single_push & 0x0000FF0000000000) >> 8) & empty;
+
+            moves.capture_left = (board.black_pawns >> 7) & NOT_A_FILE & enemy;
+            moves.capture_right = (board.black_pawns >> 9) & NOT_H_FILE & enemy;
+            return moves;
+        }
+    }
 }
