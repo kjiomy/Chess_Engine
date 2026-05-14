@@ -92,40 +92,8 @@
 
 // Functions to calculate the pseudo-legal moves for every piece
 
-
-
-    uint64_t Board::pseudolegal_bishop_moves(uint8_t square){
-        uint64_t attacks = 0;
-        uint64_t enemy = white_to_move ? black_pieces() : white_pieces();
-        uint64_t friendly = white_to_move ? white_pieces() : black_pieces();
-
-        int row = square / 8;
-        int column = square % 8;
-
-        int dr[] = {1, 1, -1, -1};
-        int dc[] = {1, -1, 1, -1};
-
-        for(int i = 0; i < 4; i++){
-            for(int step = 1; step < 8; step++){
-                int next_r = row + dr[i] * step;
-                int next_c = column + dc[i] * step;
-
-                if(next_r < 0 || next_r > 7 || next_c  < 0|| next_c > 7) break;
-
-                int next_square = next_r * 8 + next_c;
-                uint64_t bit = 1ULL << next_square;
-
-                if (bit & friendly) break;
-                attacks |= bit;
-                if (bit & enemy) break;
-            }
-        }
-
-        return attacks;
-    }
-
     uint64_t Board::pseudolegal_queen_moves(uint8_t square){
-        return MoveGen::pseudolegal_rook_moves(square, *this) | pseudolegal_bishop_moves(square);
+        return MoveGen::pseudolegal_rook_moves(square, *this) | MoveGen::pseudolegal_bishop_moves(square, *this);
     }
 
     uint64_t Board::pseudolegal_king_moves(uint8_t square){
@@ -325,7 +293,7 @@
 
         // Ora i raggi partiranno dal Re e si fermeranno correttamente sui pezzi nemici!
         if (MoveGen::pseudolegal_knight_moves(square, *this) & enemy_knights) attacked = true;
-        else if (pseudolegal_bishop_moves(square) & (enemy_bishops | enemy_queens)) attacked = true;
+        else if (MoveGen::pseudolegal_bishop_moves(square, *this) & (enemy_bishops | enemy_queens)) attacked = true;
         else if (MoveGen::pseudolegal_rook_moves(square, *this) & (enemy_rooks | enemy_queens)) attacked = true;
         else if (pseudolegal_king_moves(square) & enemy_king) attacked = true;
 
@@ -555,7 +523,7 @@
         uint64_t bishops = white_to_move ? white_bishops : black_bishops;
         while(bishops){
             int from = pop_lsb(bishops);
-            uint64_t attacks = pseudolegal_bishop_moves(from);
+            uint64_t attacks = MoveGen::pseudolegal_bishop_moves(from, *this);
 
             while(attacks){
                 int to = pop_lsb(attacks);
