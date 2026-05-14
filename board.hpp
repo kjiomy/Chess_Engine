@@ -32,10 +32,7 @@ class Board{
             return ~all_pieces();
         }
 
-        void print_binary(uint64_t);
-        void print_bitboard(uint64_t);
         void print_board();
-
 
         void toggle_piece(PieceType piece, bool is_white, uint64_t mask);
         void place_piece(int square, PieceType piece, bool is_white);

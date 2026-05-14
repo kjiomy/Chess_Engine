@@ -64,31 +64,6 @@
 
 // Ausiliary functions 
 
-    void Board::print_binary(uint64_t bitboard){
-        std::cout << std::bitset<64>(bitboard) << std::endl;
-    }
-
-    void Board::print_bitboard(uint64_t bitboard){
-        for(int column = 7; column >= 0; column--){
-            std::cout << column + 1 << "  ";
-
-            for(int row = 0; row < 8; row++){
-                int square = column * 8 + row;
-
-                if((bitboard >> square) & 1ULL){
-                    std::cout << "1 ";
-                }else{
-                    std::cout << ". ";
-                }
-            }
-
-            std::cout << std::endl;
-        }
-
-        std::cout << std::endl << "   a b c d e f g h" << std::endl;
-    }
-
-
 
     void Board::place_piece(int square, PieceType piece, bool is_white){
         uint64_t place_mask = 1ULL << square;

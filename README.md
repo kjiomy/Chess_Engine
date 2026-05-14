@@ -1,5 +1,7 @@
 # Chess_Engine
 
+to compile: g++ -O3 -flto main.cpp board.cpp movegen.cpp uci.cpp -o engine
+
 ## perft results, while optimizing
 
 starting: 
