@@ -16,16 +16,26 @@ class Board{
         Board();
         void init_board();
 
-        uint64_t white_pieces();
-        uint64_t black_pieces();
-        uint64_t all_pieces();
-        uint64_t empty_squares();
+        inline uint64_t white_pieces() const{
+            return white_pawns | white_bishops | white_king | white_knights | white_rooks | white_queens;
+        }
+
+        inline uint64_t black_pieces() const{
+            return black_pawns | black_rooks | black_bishops | black_knights | black_queens | black_king;
+        }
+
+        inline uint64_t all_pieces() const{
+            return white_pieces() | black_pieces();
+        }
+
+        inline uint64_t empty_squares() const {
+            return ~all_pieces();
+        }
 
         void print_binary(uint64_t);
         void print_bitboard(uint64_t);
         void print_board();
 
-        uint64_t pseudolegal_rook_moves(uint8_t square);
         uint64_t pseudolegal_bishop_moves(uint8_t square);
         uint64_t pseudolegal_queen_moves(uint8_t square);
         uint64_t pseudolegal_king_moves(uint8_t square);

@@ -62,24 +62,6 @@
         white_to_move = true;
     }
 
-// Functions to get various pieces/squares
-
-    uint64_t Board::white_pieces(){
-        return white_pawns | white_bishops | white_king | white_knights | white_rooks | white_queens;
-    }
-
-    uint64_t Board::black_pieces(){
-        return black_pawns | black_rooks | black_bishops | black_knights | black_queens | black_king;
-    }
-
-    uint64_t Board::all_pieces(){
-        return white_pieces() | black_pieces();
-    }
-
-    uint64_t Board::empty_squares(){
-        return ~all_pieces();
-    }
-
 // Ausiliary functions 
 
     void Board::print_binary(uint64_t bitboard){
@@ -111,36 +93,6 @@
 // Functions to calculate the pseudo-legal moves for every piece
 
 
-    uint64_t Board::pseudolegal_rook_moves(uint8_t square){
-        uint64_t attacks = 0;
-        uint64_t empty = empty_squares();
-        uint64_t enemy = white_to_move ? black_pieces() : white_pieces();
-        uint64_t friendly = white_to_move ? white_pieces() : black_pieces();
-
-        int row = square / 8;
-        int column = square % 8;
-
-        int dr[] = {1, -1, 0, 0};
-        int dc[] = {0, 0, 1, -1};
-
-        for(int i = 0; i < 4; i++){
-            for(int step = 1; step < 8; step++){
-                int next_r = row + dr[i] * step;
-                int next_c = column + dc[i] * step;
-
-                if(next_r < 0 || next_r > 7 || next_c  < 0|| next_c > 7) break;
-
-                int next_square = next_r * 8 + next_c;
-                uint64_t bit = 1ULL << next_square;
-
-                if (bit & friendly) break;
-                attacks |= bit;
-                if (bit & enemy) break;
-            }
-        }
-
-        return attacks;
-    }
 
     uint64_t Board::pseudolegal_bishop_moves(uint8_t square){
         uint64_t attacks = 0;
@@ -173,7 +125,7 @@
     }
 
     uint64_t Board::pseudolegal_queen_moves(uint8_t square){
-        return pseudolegal_rook_moves(square) | pseudolegal_bishop_moves(square);
+        return MoveGen::pseudolegal_rook_moves(square, *this) | pseudolegal_bishop_moves(square);
     }
 
     uint64_t Board::pseudolegal_king_moves(uint8_t square){
@@ -374,7 +326,7 @@
         // Ora i raggi partiranno dal Re e si fermeranno correttamente sui pezzi nemici!
         if (MoveGen::pseudolegal_knight_moves(square, *this) & enemy_knights) attacked = true;
         else if (pseudolegal_bishop_moves(square) & (enemy_bishops | enemy_queens)) attacked = true;
-        else if (pseudolegal_rook_moves(square) & (enemy_rooks | enemy_queens)) attacked = true;
+        else if (MoveGen::pseudolegal_rook_moves(square, *this) & (enemy_rooks | enemy_queens)) attacked = true;
         else if (pseudolegal_king_moves(square) & enemy_king) attacked = true;
 
         // Logica manuale dei pedoni (non è influenzata dal trick, quindi è sicura)
@@ -617,7 +569,7 @@
         uint64_t rooks = white_to_move ? white_rooks : black_rooks;
         while(rooks){
             int from = pop_lsb(rooks);
-            uint64_t attacks = pseudolegal_rook_moves(from);
+            uint64_t attacks = MoveGen::pseudolegal_rook_moves(from, *this);
 
             while(attacks){
                 int to = pop_lsb(attacks);
