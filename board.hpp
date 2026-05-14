@@ -36,8 +36,7 @@ class Board{
         void print_bitboard(uint64_t);
         void print_board();
 
-        uint64_t pseudolegal_queen_moves(uint8_t square);
-        uint64_t pseudolegal_king_moves(uint8_t square);
+        
         PawnMoves pseudolegal_pawn_moves();
 
         void toggle_piece(PieceType piece, bool is_white, uint64_t mask);

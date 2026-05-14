@@ -78,4 +78,52 @@ namespace MoveGen{
 
         return attacks;
     }
+
+    uint64_t pseudolegal_king_moves(uint8_t square, Board &board){
+        uint64_t k = 1ULL << square;
+        uint64_t friendly_pieces = board.white_to_move ? board.white_pieces() : board.black_pieces();
+        uint64_t occupied_squares = board.all_pieces();
+
+        uint64_t attacks = (k << 1) & NOT_A_FILE;
+        attacks |= (k >> 1) & NOT_H_FILE;
+        attacks |= (k << 7) & NOT_H_FILE;
+        attacks |= (k << 8);
+        attacks |= (k << 9) & NOT_A_FILE;
+        attacks |= (k >> 7) & NOT_A_FILE;
+        attacks |= (k >> 8);
+        attacks |= (k >> 9) & NOT_H_FILE;
+
+        attacks &= ~friendly_pieces;
+
+        // Castling logic
+        if(board.white_to_move){
+            // White side
+            if(square == 4){
+                // King side
+                if((board.castling_rights & WK) && !(occupied_squares & (1ULL  << 5 | 1ULL << 6))){
+                    attacks |= (1ULL << 6);
+                }
+
+                // Queen side
+                if((board.castling_rights & WQ) && !(occupied_squares & (1ULL  << 3 | 1ULL << 2 | 1ULL << 1))){
+                    attacks |= (1ULL << 2);
+                }
+            }
+        }else {
+            // Black side
+            if(square == 60){
+                // King side
+                if((board.castling_rights & BK) && !(occupied_squares &(1ULL << 61 | 1ULL << 62))){
+                    attacks |= (1ULL << 62);
+                }
+
+                if((board.castling_rights & BQ) && !(occupied_squares &(1ULL << 59 | 1ULL << 58 | 1ULL << 57))){
+                    attacks |= (1ULL << 58);
+                }
+            }
+        }
+
+
+        return attacks;
+    }
 }

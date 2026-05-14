@@ -92,58 +92,6 @@
 
 // Functions to calculate the pseudo-legal moves for every piece
 
-    uint64_t Board::pseudolegal_queen_moves(uint8_t square){
-        return MoveGen::pseudolegal_rook_moves(square, *this) | MoveGen::pseudolegal_bishop_moves(square, *this);
-    }
-
-    uint64_t Board::pseudolegal_king_moves(uint8_t square){
-        uint64_t k = 1ULL << square;
-        uint64_t friendly_pieces = white_to_move ? white_pieces() : black_pieces();
-        uint64_t occupied_squares = all_pieces();
-
-        uint64_t attacks = (k << 1) & NOT_A_FILE;
-        attacks |= (k >> 1) & NOT_H_FILE;
-        attacks |= (k << 7) & NOT_H_FILE;
-        attacks |= (k << 8);
-        attacks |= (k << 9) & NOT_A_FILE;
-        attacks |= (k >> 7) & NOT_A_FILE;
-        attacks |= (k >> 8);
-        attacks |= (k >> 9) & NOT_H_FILE;
-
-        attacks &= ~friendly_pieces;
-
-        // Castling logic
-        if(white_to_move){
-            // White side
-            if(square == 4){
-                // King side
-                if((castling_rights & WK) && !(occupied_squares & (1ULL  << 5 | 1ULL << 6))){
-                    attacks |= (1ULL << 6);
-                }
-
-                // Queen side
-                if((castling_rights & WQ) && !(occupied_squares & (1ULL  << 3 | 1ULL << 2 | 1ULL << 1))){
-                    attacks |= (1ULL << 2);
-                }
-            }
-        }else {
-            // Black side
-            if(square == 60){
-                // King side
-                if((castling_rights & BK) && !(occupied_squares &(1ULL << 61 | 1ULL << 62))){
-                    attacks |= (1ULL << 62);
-                }
-
-                if((castling_rights & BQ) && !(occupied_squares &(1ULL << 59 | 1ULL << 58 | 1ULL << 57))){
-                    attacks |= (1ULL << 58);
-                }
-            }
-        }
-
-
-        return attacks;
-    }
-
     PawnMoves Board::pseudolegal_pawn_moves(){
         PawnMoves moves;
         
@@ -295,7 +243,7 @@
         if (MoveGen::pseudolegal_knight_moves(square, *this) & enemy_knights) attacked = true;
         else if (MoveGen::pseudolegal_bishop_moves(square, *this) & (enemy_bishops | enemy_queens)) attacked = true;
         else if (MoveGen::pseudolegal_rook_moves(square, *this) & (enemy_rooks | enemy_queens)) attacked = true;
-        else if (pseudolegal_king_moves(square) & enemy_king) attacked = true;
+        else if (MoveGen::pseudolegal_king_moves(square, *this) & enemy_king) attacked = true;
 
         // Logica manuale dei pedoni (non è influenzata dal trick, quindi è sicura)
         uint64_t sq_bit = 1ULL << square;
@@ -551,7 +499,7 @@
         uint64_t queens = white_to_move ? white_queens : black_queens;
         while(queens){
             int from = pop_lsb(queens);
-            uint64_t attacks = pseudolegal_queen_moves(from);
+            uint64_t attacks = MoveGen::pseudolegal_queen_moves(from, *this);
 
             while(attacks){
                 int to = pop_lsb(attacks);
@@ -625,7 +573,7 @@
         uint64_t king = white_to_move ? white_king : black_king;
         while(king){
             int from = pop_lsb(king);
-            uint64_t attacks = pseudolegal_king_moves(from);
+            uint64_t attacks = MoveGen::pseudolegal_king_moves(from, *this);
 
             while(attacks){
                 int to = pop_lsb(attacks);

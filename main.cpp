@@ -46,7 +46,7 @@ int perft(Board &board, int depth){
 
 void perft_test(Board &currentBoard, int max_depth){
     cout << "--- Beginning peft test ---" << endl;
-    currentBoard.print_board(); // Stampiamo la scacchiera per sicurezza
+    //currentBoard.print_board();
     cout << "-------------------------" << endl;
 
     for(int depth = 1; depth <= max_depth; depth++){
