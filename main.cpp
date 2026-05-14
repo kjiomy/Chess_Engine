@@ -44,9 +44,47 @@ int perft(Board &board, int depth){
     return nodes;
 }
 
+void perft_test(Board &currentBoard, int max_depth){
+    cout << "--- Beginning peft test ---" << endl;
+    currentBoard.print_board(); // Stampiamo la scacchiera per sicurezza
+    cout << "-------------------------" << endl;
+
+    for(int depth = 1; depth <= max_depth; depth++){
+        // 1. Registra il tempo di inizio
+        auto start_time = chrono::high_resolution_clock::now();
+
+        // 2. Esegui il perft
+        int nodes = perft(currentBoard, depth);
+
+        // 3. Registra il tempo di fine
+        auto end_time = chrono::high_resolution_clock::now();
+
+        // 4. Calcola la differenza in secondi
+        chrono::duration<double> elapsed = end_time - start_time;
+        double seconds = elapsed.count();
+
+        // 5. Calcola i Nodi al Secondo (NPS)
+        // Evitiamo la divisione per zero
+        uint64_t nps = (seconds > 0.0) ? (nodes / seconds) : 0;
+
+        // 6. Stampa i risultati
+        cout << "Depth " << depth 
+             << " | Nodes: " << nodes 
+             << " | Time: " << seconds << " s" 
+             << " | NPS: " << nps << endl;
+    }
+
+    cout << "--- TEST COMPLETATO ---" << endl;
+}
+
 int main(){
     Board currentBoard;
 
+    perft_test(currentBoard, 6);
+   
 
-    uci_loop(currentBoard);
+
+    //uci_loop(currentBoard);
+
+    return 0;
 }

@@ -1,4 +1,5 @@
 #include "board.hpp"
+#include "movegen.hpp"
 #include <iostream>
 #include <bitset>
 
@@ -109,22 +110,6 @@
 
 // Functions to calculate the pseudo-legal moves for every piece
 
-    uint64_t Board::pseudolegal_knight_moves(uint8_t square){
-        uint64_t k = 1ULL << square;
-        uint64_t friendly_pieces = white_to_move ? white_pieces() : black_pieces();
-
-        uint64_t attacks = (k << 17) & NOT_A_FILE;
-        attacks |= (k << 15) & NOT_H_FILE;
-        attacks |= (k << 10) & NOT_AB_FILE;
-        attacks |= (k <<  6) & NOT_GH_FILE;
-        attacks |= (k >> 17) & NOT_H_FILE;
-        attacks |= (k >> 15) & NOT_A_FILE;
-        attacks |= (k >> 10) & NOT_GH_FILE;
-        attacks |= (k >>  6) & NOT_AB_FILE;
-        attacks = attacks & ~friendly_pieces;
-
-        return attacks;
-    }
 
     uint64_t Board::pseudolegal_rook_moves(uint8_t square){
         uint64_t attacks = 0;
@@ -387,7 +372,7 @@
         bool attacked = false;
 
         // Ora i raggi partiranno dal Re e si fermeranno correttamente sui pezzi nemici!
-        if (pseudolegal_knight_moves(square) & enemy_knights) attacked = true;
+        if (MoveGen::pseudolegal_knight_moves(square, *this) & enemy_knights) attacked = true;
         else if (pseudolegal_bishop_moves(square) & (enemy_bishops | enemy_queens)) attacked = true;
         else if (pseudolegal_rook_moves(square) & (enemy_rooks | enemy_queens)) attacked = true;
         else if (pseudolegal_king_moves(square) & enemy_king) attacked = true;
@@ -604,7 +589,7 @@
         uint64_t knights = white_to_move ? white_knights : black_knights;
         while(knights){
             int from = pop_lsb(knights);
-            uint64_t attacks = pseudolegal_knight_moves(from);
+            uint64_t attacks = MoveGen::pseudolegal_knight_moves(from, *this);
 
             while(attacks){
                 int to = pop_lsb(attacks);

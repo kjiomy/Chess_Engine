@@ -25,7 +25,6 @@ class Board{
         void print_bitboard(uint64_t);
         void print_board();
 
-        uint64_t pseudolegal_knight_moves(uint8_t square);
         uint64_t pseudolegal_rook_moves(uint8_t square);
         uint64_t pseudolegal_bishop_moves(uint8_t square);
         uint64_t pseudolegal_queen_moves(uint8_t square);

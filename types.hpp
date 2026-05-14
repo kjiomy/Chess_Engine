@@ -1,3 +1,5 @@
+#pragma once
+
 // Defining some filter to calculate legal moves
 constexpr uint64_t NOT_A_FILE  = 0xFEFEFEFEFEFEFEFE;
 constexpr uint64_t NOT_H_FILE = 0x7F7F7F7F7F7F7F7F;

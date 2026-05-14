@@ -1,4 +1,5 @@
 #include "uci.hpp"
+#include "search.hpp"
 
 using namespace std;
 
@@ -128,6 +129,8 @@ void uci_loop(Board& currentBoard){
                 cout << "bestmove 0000" << endl; 
             }
         }
+
+        
         else if(command == "quit"){
             break;
         }
