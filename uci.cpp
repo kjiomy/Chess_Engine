@@ -1,5 +1,6 @@
 #include "uci.hpp"
 #include "search.hpp"
+#include "movegen.hpp"
 
 using namespace std;
 
@@ -26,7 +27,7 @@ string move_to_string(Move move){
 
 Move parse_move(Board &board, string s){
     MoveList list;
-    board.generate_all_moves(list);
+    MoveGen::generate_all_moves(list, board);
 
     for (int i = 0; i < list.count; i++) {
         Move m = list.moves[i];
@@ -98,7 +99,7 @@ void uci_loop(Board& currentBoard){
         else if(command == "go"){
             // Just chosing the first move in the list
             MoveList list;
-            currentBoard.generate_all_moves(list);
+            MoveGen::generate_all_moves(list, currentBoard);
             Move best_move = 0;
 
             for (int i = 0; i < list.count; i++) {

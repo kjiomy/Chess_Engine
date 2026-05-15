@@ -154,4 +154,161 @@ namespace MoveGen{
             return moves;
         }
     }
+
+    void generate_all_moves(MoveList &list, Board &board){
+        uint64_t enemy_pieces = board.white_to_move ? board.black_pieces() : board.white_pieces();
+
+        uint64_t knights = board.white_to_move ? board.white_knights : board.black_knights;
+        while(knights){
+            int from = pop_lsb(knights);
+            uint64_t attacks = MoveGen::pseudolegal_knight_moves(from, board);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                list.push(encode_move(from, to, flag));
+            }
+        }
+    
+        uint64_t bishops = board.white_to_move ? board.white_bishops : board.black_bishops;
+        while(bishops){
+            int from = pop_lsb(bishops);
+            uint64_t attacks = MoveGen::pseudolegal_bishop_moves(from, board);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                list.push(encode_move(from, to, flag));
+            }
+        }
+    
+        uint64_t rooks = board.white_to_move ? board.white_rooks : board.black_rooks;
+        while(rooks){
+            int from = pop_lsb(rooks);
+            uint64_t attacks = MoveGen::pseudolegal_rook_moves(from, board);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                list.push(encode_move(from, to, flag));
+            }
+        }
+
+        uint64_t queens = board.white_to_move ? board.white_queens : board.black_queens;
+        while(queens){
+            int from = pop_lsb(queens);
+            uint64_t attacks = MoveGen::pseudolegal_queen_moves(from, board);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+
+                list.push(encode_move(from, to, flag));
+            }
+        }
+
+        PawnMoves pawn_moves = pseudolegal_pawn_moves(board);
+        while(pawn_moves.single_push){
+            int to = pop_lsb(pawn_moves.single_push);
+            int from = board.white_to_move ? to - 8 : to + 8;
+            uint64_t rank_mask = board.white_to_move ? MASK_8_RANK : MASK_1_RANK;
+
+            if((1ULL << to) & rank_mask){
+                list.push(encode_move(from, to, PROMO_KNIGHT));
+                list.push(encode_move(from, to, PROMO_BISHOP));
+                list.push(encode_move(from, to, PROMO_ROOK));
+                list.push(encode_move(from, to, PROMO_QUEEN));
+            }else{
+                list.push(encode_move(from, to, QUIET_MOVE));
+            }   
+        }
+
+        while(pawn_moves.double_push){
+            int to = pop_lsb(pawn_moves.double_push);
+            int from = board.white_to_move ? to - 16 : to + 16;
+
+            list.push(encode_move(from, to, DOUBLE_PAWN_PUSH));
+        }
+
+        while(pawn_moves.capture_left){
+            int to = pop_lsb(pawn_moves.capture_left);
+            int from = board.white_to_move ? to - 7 : to + 7;
+            int flag = (1ULL << to) & board.en_passant_target ? EP_CAPTURE : CAPTURE;
+            uint64_t rank_mask = board.white_to_move ? MASK_8_RANK : MASK_1_RANK;
+
+            if((1ULL << to) & rank_mask){
+                list.push(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
+                list.push(encode_move(from, to, PROMO_CAPTURE_BISHOP));
+                list.push(encode_move(from, to, PROMO_CAPTURE_ROOK));
+                list.push(encode_move(from, to, PROMO_CAPTURE_QUEEN));
+            }else{
+                list.push(encode_move(from, to, flag));
+            }
+        }
+
+        while(pawn_moves.capture_right){
+            int to = pop_lsb(pawn_moves.capture_right);
+            int from = board.white_to_move ? to - 9 : to + 9;
+            int flag = ((1ULL << to) & board.en_passant_target) ? EP_CAPTURE : CAPTURE;
+
+            uint64_t rank_mask = board.white_to_move ? MASK_8_RANK : MASK_1_RANK;
+
+            if((1ULL << to) & rank_mask){
+                list.push(encode_move(from, to, PROMO_CAPTURE_KNIGHT));
+                list.push(encode_move(from, to, PROMO_CAPTURE_BISHOP));
+                list.push(encode_move(from, to, PROMO_CAPTURE_ROOK));
+                list.push(encode_move(from, to, PROMO_CAPTURE_QUEEN));
+            }else{
+                list.push(encode_move(from, to, flag));
+            }
+        }
+    
+        uint64_t king = board.white_to_move ? board.white_king : board.black_king;
+        while(king){
+            int from = pop_lsb(king);
+            uint64_t attacks = MoveGen::pseudolegal_king_moves(from, board);
+
+            while(attacks){
+                int to = pop_lsb(attacks);
+                int flag = ((1ULL << to) & enemy_pieces) ? CAPTURE : QUIET_MOVE;
+                
+                bool can_castle = true;
+
+                if(board.white_to_move){
+                    if(from == 4){
+                        if(to == 2) {
+                            flag = QUEEN_CASTLE;
+                            if(board.is_square_attacked(4, false) || board.is_square_attacked(3, false)) can_castle = false;
+                        }
+                        if(to == 6) {
+                            flag = KING_CASTLE;
+                            if(board.is_square_attacked(4, false) || board.is_square_attacked(5, false)) can_castle = false;
+                        }
+                    }
+                }else{
+                    if(from == 60){
+                        if(to == 58) {
+                            flag = QUEEN_CASTLE;
+                            if(board.is_square_attacked(60, true) || board.is_square_attacked(59, true)) can_castle = false;
+                        }
+                        if(to == 62) {
+                            flag = KING_CASTLE;
+                            if(board.is_square_attacked(60, true) || board.is_square_attacked(61, true)) can_castle = false;
+                        }
+                    }
+                }
+
+                if (can_castle) {
+                    list.push(encode_move(from, to, flag));
+                }
+            }
+        }
+    }
 }

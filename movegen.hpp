@@ -12,4 +12,5 @@ namespace MoveGen{
     }
     uint64_t pseudolegal_king_moves(uint8_t square, Board &board);
     PawnMoves pseudolegal_pawn_moves(Board &board);
+    void generate_all_moves(MoveList &list, Board &board);
 }

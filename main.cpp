@@ -2,11 +2,13 @@
 #include <chrono>
 #include "board.hpp"
 #include "uci.hpp"
+#include "movegen.hpp"
 
 
 // Moving the legality check in the perft to avoid wasting memory
 
 using namespace std;
+using namespace MoveGen;
 
 int perft(Board &board, int depth){
     if (depth == 0) return 1;
@@ -14,7 +16,7 @@ int perft(Board &board, int depth){
     int nodes = 0;
 
     MoveList move_list;
-    board.generate_all_moves(move_list);
+    generate_all_moves(move_list, board);
 
 
     for(int i = 0; i < move_list.count; i++){

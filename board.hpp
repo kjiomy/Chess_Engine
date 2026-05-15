@@ -43,7 +43,4 @@ class Board{
 
         BoardState make_move(Move move);
         void unmake_move(Move move, BoardState prev_state);
-
-        void generate_all_moves(MoveList &list);
-
 };
