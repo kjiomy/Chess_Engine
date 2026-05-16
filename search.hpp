@@ -7,5 +7,6 @@ namespace Search{
 
     int get_minmax_score(Board &board, int depth);
 
+
     Move get_greedy_move(Board &board);
 }
