@@ -7,7 +7,8 @@ namespace Search{
     MoveList list;
     MoveGen::generate_all_moves(list, board);
     Move best_move = 0;
-    int best_score = -10000000;
+    int alpha = -10000000;
+    int beta = 10000000;
 
     for(int i = 0; i < list.count; i++) {
         Move m = list.moves[i];
@@ -15,6 +16,7 @@ namespace Search{
 
         bool moving_side = !board.white_to_move;
         uint64_t king = board.bitboards[moving_side][KING];
+
         if(king != 0) {
             uint8_t king_square = __builtin_ctzll(king);
             if(board.is_square_attacked(king_square, board.white_to_move)) {
@@ -23,11 +25,11 @@ namespace Search{
             }
         }
 
-        int score = -get_minmax_score(board, depth - 1);
+        int score = -get_alphabeta(board, depth - 1, -beta, -alpha);
         board.unmake_move(m, prev_state);
 
-        if(score > best_score || best_move == 0) {
-            best_score = score;
+        if(score > alpha || best_move == 0) {
+            alpha = score;
             best_move = m;  
         }
     }
@@ -35,7 +37,7 @@ namespace Search{
     return best_move;
 }
 
-int get_minmax_score(Board &board, int depth) {
+    int get_minmax_score(Board &board, int depth) {
     if(depth == 0) return Eval::evaluate(board);
     
     MoveList list;
@@ -81,6 +83,56 @@ int get_minmax_score(Board &board, int depth) {
 
     return best_score;
 }
+
+    int get_alphabeta(Board &board, int depth, int alpha, int beta){
+        if(depth == 0) return Eval::evaluate(board);
+
+        MoveList list;
+        MoveGen::generate_all_moves(list, board);
+
+        int legal_moves = 0;
+
+        for(int i = 0; i < list.count; i++){
+            Move m = list.moves[i];
+            BoardState prev_state = board.make_move(m);
+
+            bool moving_side = !board.white_to_move;
+            uint64_t king = board.bitboards[moving_side][KING];
+
+            if(king != 0){
+                uint8_t sq = __builtin_ctzll(king);
+                if(board.is_square_attacked(sq, board.white_to_move)){
+                    board.unmake_move(m, prev_state);
+                    continue;
+                }
+            }else{
+                board.unmake_move(m, prev_state);
+                continue;
+            }
+
+            legal_moves++;
+
+            int score = -get_alphabeta(board, depth - 1, -beta, -alpha);
+            board.unmake_move(m, prev_state);
+
+            if(score >= beta) return beta;
+            if(score > alpha) alpha = score;
+        }
+
+        if (legal_moves == 0) {
+        bool cur = board.white_to_move;
+        uint64_t my_king = board.bitboards[cur][KING];
+        if (my_king != 0) {
+            uint8_t ksq = __builtin_ctzll(my_king);
+            if (board.is_square_attacked(ksq, !cur))
+                return -1000000 + (10 - depth);
+            }
+
+            return 0; 
+        }
+
+        return alpha;
+    }
 
     Move get_greedy_move(Board &board){
         MoveList moves;
