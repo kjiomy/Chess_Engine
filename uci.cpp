@@ -74,8 +74,9 @@ void uci_loop(Board& currentBoard){
         }
         else if(command == "ucinewgame"){
             currentBoard.init_board();
-        }
-        else if(command == "position"){
+        }else if(command == "setoption"){
+            continue;
+        }else if(command == "position"){
             string token;
             iss >> token;
 
@@ -97,7 +98,7 @@ void uci_loop(Board& currentBoard){
             }
         }
         else if(command == "go"){
-            Move best_move = Search::get_greedy_move(currentBoard);
+            Move best_move = Search::get_best_move(currentBoard, 3);
 
             if(best_move != 0){
                 cout << "bestmove " << move_to_string(best_move) << endl;
