@@ -135,22 +135,22 @@ namespace MoveGen{
             uint64_t enemy = board.black_pieces() | board.en_passant_target;
 
 
-            moves.single_push = (board.white_pawns << 8) & empty;
+            moves.single_push = (board.bitboards[WHITE][PAWN] << 8) & empty;
             moves.double_push = ((moves.single_push & 0x0000000000FF0000) << 8) & empty;
 
-            moves.capture_left = (board.white_pawns << 7) & NOT_H_FILE & enemy;
-            moves.capture_right = (board.white_pawns << 9) & NOT_A_FILE & enemy;
+            moves.capture_left = (board.bitboards[WHITE][PAWN] << 7) & NOT_H_FILE & enemy;
+            moves.capture_right = (board.bitboards[WHITE][PAWN] << 9) & NOT_A_FILE & enemy;
         return moves;
         }else {
             uint64_t empty = board.empty_squares();
             uint64_t enemy = board.white_pieces() | board.en_passant_target;
 
 
-            moves.single_push = (board.black_pawns >> 8) & empty;
+            moves.single_push = (board.bitboards[BLACK][PAWN] >> 8) & empty;
             moves.double_push = ((moves.single_push & 0x0000FF0000000000) >> 8) & empty;
 
-            moves.capture_left = (board.black_pawns >> 7) & NOT_A_FILE & enemy;
-            moves.capture_right = (board.black_pawns >> 9) & NOT_H_FILE & enemy;
+            moves.capture_left = (board.bitboards[BLACK][PAWN] >> 7) & NOT_A_FILE & enemy;
+            moves.capture_right = (board.bitboards[BLACK][PAWN] >> 9) & NOT_H_FILE & enemy;
             return moves;
         }
     }
@@ -158,7 +158,7 @@ namespace MoveGen{
     void generate_all_moves(MoveList &list, Board &board){
         uint64_t enemy_pieces = board.white_to_move ? board.black_pieces() : board.white_pieces();
 
-        uint64_t knights = board.white_to_move ? board.white_knights : board.black_knights;
+        uint64_t knights = board.bitboards[board.white_to_move][KNIGHT];
         while(knights){
             int from = pop_lsb(knights);
             uint64_t attacks = MoveGen::pseudolegal_knight_moves(from, board);
@@ -172,7 +172,7 @@ namespace MoveGen{
             }
         }
     
-        uint64_t bishops = board.white_to_move ? board.white_bishops : board.black_bishops;
+        uint64_t bishops = board.bitboards[board.white_to_move][BISHOP];
         while(bishops){
             int from = pop_lsb(bishops);
             uint64_t attacks = MoveGen::pseudolegal_bishop_moves(from, board);
@@ -186,7 +186,7 @@ namespace MoveGen{
             }
         }
     
-        uint64_t rooks = board.white_to_move ? board.white_rooks : board.black_rooks;
+        uint64_t rooks = board.bitboards[board.white_to_move][ROOK];
         while(rooks){
             int from = pop_lsb(rooks);
             uint64_t attacks = MoveGen::pseudolegal_rook_moves(from, board);
@@ -200,7 +200,7 @@ namespace MoveGen{
             }
         }
 
-        uint64_t queens = board.white_to_move ? board.white_queens : board.black_queens;
+        uint64_t queens = board.bitboards[board.white_to_move][QUEEN];
         while(queens){
             int from = pop_lsb(queens);
             uint64_t attacks = MoveGen::pseudolegal_queen_moves(from, board);
@@ -270,7 +270,7 @@ namespace MoveGen{
             }
         }
     
-        uint64_t king = board.white_to_move ? board.white_king : board.black_king;
+        uint64_t king = board.bitboards[board.white_to_move][KING];
         while(king){
             int from = pop_lsb(king);
             uint64_t attacks = MoveGen::pseudolegal_king_moves(from, board);

@@ -6,8 +6,8 @@
 
 class Board{
     public:
-        uint64_t white_pawns, white_rooks, white_bishops, white_knights, white_queens, white_king;
-        uint64_t black_pawns, black_rooks, black_bishops, black_knights, black_queens, black_king;
+        uint64_t bitboards[2][7];
+        PieceType piece_list[64];
 
         bool white_to_move;
         uint8_t castling_rights;
@@ -17,11 +17,11 @@ class Board{
         void init_board();
 
         inline uint64_t white_pieces() const{
-            return white_pawns | white_bishops | white_king | white_knights | white_rooks | white_queens;
+            return bitboards[WHITE][PAWN] | bitboards[WHITE][KNIGHT] | bitboards[WHITE][BISHOP] | bitboards[WHITE][ROOK] | bitboards[WHITE][QUEEN] | bitboards[WHITE][KING];
         }
 
         inline uint64_t black_pieces() const{
-            return black_pawns | black_rooks | black_bishops | black_knights | black_queens | black_king;
+            return bitboards[BLACK][PAWN] | bitboards[BLACK][KNIGHT] | bitboards[BLACK][BISHOP] | bitboards[BLACK][ROOK] | bitboards[BLACK][QUEEN] | bitboards[BLACK][KING];
         }
 
         inline uint64_t all_pieces() const{
@@ -34,11 +34,36 @@ class Board{
 
         void print_board();
 
-        void toggle_piece(PieceType piece, bool is_white, uint64_t mask);
-        void place_piece(int square, PieceType piece, bool is_white);
-        void remove_piece(int square, PieceType piece, bool is_white);
 
-        PieceType get_piece_at(uint8_t square, bool check_white);
+
+        inline void place_piece(int square, PieceType piece, bool is_white){
+            if(piece == EMPTY) return;
+            uint64_t place_mask = 1ULL << square;
+
+            bitboards[is_white][piece] |= place_mask;
+            piece_list[square] = piece;
+        }
+
+        inline void remove_piece(int square, PieceType piece, bool is_white){
+            if(piece == EMPTY) return;
+            uint64_t remove_mask = ~(1ULL << square);
+
+            bitboards[is_white][piece] &= remove_mask;
+            piece_list[square] = EMPTY;
+        }
+
+        inline void move_piece(int from, int to, bool is_white, PieceType piece){
+            if(piece == EMPTY) return;
+            uint64_t move_mask = (1ULL << from) | (1ULL << to);
+
+            bitboards[is_white][piece] ^= move_mask;
+            piece_list[from] = EMPTY;
+            piece_list[to] = piece;
+        }
+
+        inline PieceType get_piece_at(uint8_t square) const{
+            return piece_list[square];
+        }
         bool is_square_attacked(uint8_t square, bool is_white);
 
         BoardState make_move(Move move);

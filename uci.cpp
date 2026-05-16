@@ -35,7 +35,7 @@ Move parse_move(Board &board, string s){
         // Cheking if move is legal
         BoardState state = board.make_move(m);
         bool moving_side = !board.white_to_move;
-        uint64_t king = moving_side ? board.white_king : board.black_king;
+        uint64_t king = board.bitboards[moving_side][KING];
         
         bool legal = true;
         if (king != 0) {
@@ -107,7 +107,7 @@ void uci_loop(Board& currentBoard){
                 BoardState state = currentBoard.make_move(m);
 
                 bool moving_side = !currentBoard.white_to_move;
-                uint64_t king = moving_side ? currentBoard.white_king : currentBoard.black_king;
+                uint64_t king = currentBoard.bitboards[moving_side][KING];
                 
                 bool legal = true;
                 if (king != 0) {

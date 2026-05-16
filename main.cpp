@@ -25,7 +25,7 @@ int perft(Board &board, int depth){
         BoardState saved_state = board.make_move(m);
 
         bool moving_side = !board.white_to_move;
-        uint64_t king = moving_side ? board.white_king : board.black_king;
+        uint64_t king = board.bitboards[moving_side][KING];
 
         if(king != 0){
             uint8_t king_square = __builtin_ctzll(king);
@@ -52,24 +52,18 @@ void perft_test(Board &currentBoard, int max_depth){
     cout << "-------------------------" << endl;
 
     for(int depth = 1; depth <= max_depth; depth++){
-        // 1. Registra il tempo di inizio
         auto start_time = chrono::high_resolution_clock::now();
 
-        // 2. Esegui il perft
         int nodes = perft(currentBoard, depth);
 
-        // 3. Registra il tempo di fine
         auto end_time = chrono::high_resolution_clock::now();
 
-        // 4. Calcola la differenza in secondi
         chrono::duration<double> elapsed = end_time - start_time;
         double seconds = elapsed.count();
 
-        // 5. Calcola i Nodi al Secondo (NPS)
-        // Evitiamo la divisione per zero
         uint64_t nps = (seconds > 0.0) ? (nodes / seconds) : 0;
 
-        // 6. Stampa i risultati
+
         cout << "Depth " << depth 
              << " | Nodes: " << nodes 
              << " | Time: " << seconds << " s" 

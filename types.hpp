@@ -11,7 +11,10 @@ constexpr uint64_t MASK_1_RANK = 0x00000000000000FF;
 
 typedef uint16_t Move;
 
-
+enum Color {
+    BLACK = 0,
+    WHITE = 1
+};
 
 enum Castling  {
     WK = 1,
