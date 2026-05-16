@@ -97,32 +97,7 @@ void uci_loop(Board& currentBoard){
             }
         }
         else if(command == "go"){
-            // Just chosing the first move in the list
-            MoveList list;
-            MoveGen::generate_all_moves(list, currentBoard);
-            Move best_move = 0;
-
-            for (int i = 0; i < list.count; i++) {
-                Move m = list.moves[i];
-                BoardState state = currentBoard.make_move(m);
-
-                bool moving_side = !currentBoard.white_to_move;
-                uint64_t king = currentBoard.bitboards[moving_side][KING];
-                
-                bool legal = true;
-                if (king != 0) {
-                    uint8_t king_sq = __builtin_ctzll(king);
-                    if (currentBoard.is_square_attacked(king_sq, currentBoard.white_to_move)) legal = false;
-                } else { legal = false; }
-
-                currentBoard.unmake_move(m, state);
-
-                if (legal) {
-                    best_move = m; 
-                    break; 
-                }
-            }
-
+            Move best_move = Search::get_greedy_move(currentBoard);
 
             if(best_move != 0){
                 cout << "bestmove " << move_to_string(best_move) << endl;

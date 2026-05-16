@@ -1,10 +1,9 @@
+#pragma once
 #include "board.hpp"
-#include "movegen.hpp"
-#include "evaluation.hpp"
+#include "types.hpp"
 
-class Searcher {
-    public:
-        Searcher();
+namespace Search{
+    Move get_best_move(Board &board, int depth);
 
-        Move search(Board &board);
-};
+    Move get_greedy_move(Board &board);
+}

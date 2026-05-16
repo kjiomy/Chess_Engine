@@ -1,6 +1,6 @@
 # Chess_Engine
 
-to compile: g++ -O3 -flto main.cpp board.cpp movegen.cpp uci.cpp -o engine
+to compile: g++ -O3 -flto main.cpp board.cpp movegen.cpp uci.cpp evaluation.cpp -o engine
 
 ## perft results, while optimizing
 

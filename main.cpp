@@ -76,11 +76,10 @@ void perft_test(Board &currentBoard, int max_depth){
 int main(){
     Board currentBoard;
 
-    perft_test(currentBoard, 6);
-   
+    //perft_test(currentBoard, 6);
 
 
-    //uci_loop(currentBoard);
+    uci_loop(currentBoard);
 
     return 0;
 }
