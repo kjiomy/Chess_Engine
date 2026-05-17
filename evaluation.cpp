@@ -78,8 +78,6 @@ const int* pst_table[7] = {
 
 
 namespace Eval{
-    const int piece_value[7] = {0, 100, 300, 320, 500, 900, 0};
-
     int evaluate(Board &board){
         int white_score = 0;
         int black_score = 0;

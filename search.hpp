@@ -9,5 +9,7 @@ namespace Search{
 
     int get_alphabeta(Board &board, int depth, int alpha, int beta);
 
+    
+
     Move get_greedy_move(Board &board);
 }

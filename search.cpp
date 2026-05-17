@@ -1,6 +1,8 @@
 #include "search.hpp"
 #include "movegen.hpp"
 #include "evaluation.hpp"
+#include "types.hpp"
+
 
 namespace Search{
     Move get_best_move(Board &board, int depth) {
@@ -84,11 +86,53 @@ namespace Search{
     return best_score;
 }
 
+    int score_move(Board &board, Move m){
+        int from = get_move_from(m);
+        int to = get_move_to(m);
+
+        int attacker = board.get_piece_at(from);
+        int attacked = board.get_piece_at(to);
+
+        if(attacked != 0){
+            return (10 * Eval::piece_value[attacked]) - Eval::piece_value[attacker];
+        }
+
+        return 0;
+    }
+
+    void sort_moves(MoveList &list, Board &board){
+        int scores[256];
+
+        for (int i = 0; i < list.count; i++) {
+            scores[i] = score_move(board, list.moves[i]);
+        }
+
+        for (int i = 0; i < list.count - 1; i++) {
+            int best_idx = i;
+            
+            for (int j = i + 1; j < list.count; j++) {
+                if (scores[j] > scores[best_idx]) {
+                    best_idx = j;
+                }
+            }
+
+            int temp_score = scores[i];
+            scores[i] = scores[best_idx];
+            scores[best_idx] = temp_score;
+
+            Move temp_move = list.moves[i];
+            list.moves[i] = list.moves[best_idx];
+            list.moves[best_idx] = temp_move;
+        }
+    }
+
     int get_alphabeta(Board &board, int depth, int alpha, int beta){
         if(depth == 0) return Eval::evaluate(board);
 
         MoveList list;
         MoveGen::generate_all_moves(list, board);
+
+        sort_moves(list, board);
 
         int legal_moves = 0;
 
@@ -133,6 +177,7 @@ namespace Search{
 
         return alpha;
     }
+
 
     Move get_greedy_move(Board &board){
         MoveList moves;

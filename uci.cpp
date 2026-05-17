@@ -98,7 +98,7 @@ void uci_loop(Board& currentBoard){
             }
         }
         else if(command == "go"){
-            Move best_move = Search::get_best_move(currentBoard, 7);
+            Move best_move = Search::get_best_move(currentBoard, 8);
 
             if(best_move != 0){
                 cout << "bestmove " << move_to_string(best_move) << endl;
