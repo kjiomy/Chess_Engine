@@ -71,6 +71,23 @@
             }
         }
 
+        for(int i = 0; i < 64; i++){
+            uint64_t k = 1ULL << i;
+
+            uint64_t attacks = 0;
+
+            attacks = (k << 17) & NOT_A_FILE;
+            attacks |= (k << 15) & NOT_H_FILE;
+            attacks |= (k << 10) & NOT_AB_FILE;
+            attacks |= (k <<  6) & NOT_GH_FILE;
+            attacks |= (k >> 17) & NOT_H_FILE;
+            attacks |= (k >> 15) & NOT_A_FILE;
+            attacks |= (k >> 10) & NOT_GH_FILE;
+            attacks |= (k >>  6) & NOT_AB_FILE;
+
+            MoveGen::knight_masks[i] = attacks;
+        }
+
         castling_rights = 0x0F;
         en_passant_target = 0x0000000000000000;
         white_to_move = true;
@@ -140,7 +157,6 @@
 
         // Implementing all the flags...
 
-        uint64_t move_mask;
 
         switch(flags){
             case QUIET_MOVE:
@@ -263,7 +279,6 @@
             remove_piece(to, get_piece_at(to), white_to_move);
             place_piece(from, PAWN, white_to_move);
         }else{
-            uint64_t move_mask = (1ULL << from) | (1ULL << to);
             move_piece(to, from, white_to_move, moved_piece);
         }
 
