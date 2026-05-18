@@ -2,3 +2,4 @@ chess
 .DS_Store
 .DS_Store
 engine
+bin/
