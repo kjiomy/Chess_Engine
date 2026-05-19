@@ -8,6 +8,7 @@ class Board{
     public:
         uint64_t bitboards[2][7];
         PieceType piece_list[64];
+        uint64_t hash_key;
 
         bool white_to_move;
         uint8_t castling_rights;

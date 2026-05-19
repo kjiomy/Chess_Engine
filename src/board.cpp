@@ -1,5 +1,6 @@
 #include "board.hpp"
 #include "movegen.hpp"
+#include "zobrist.hpp"
 #include <iostream>
 #include <bitset>
 #include <algorithm>
@@ -88,6 +89,9 @@
             MoveGen::knight_masks[i] = attacks;
         }
 
+        Zobrist::init();
+        hash_key = Zobrist::generate_hash(*this);
+
         castling_rights = 0x0F;
         en_passant_target = 0x0000000000000000;
         white_to_move = true;
@@ -150,12 +154,24 @@
             captured_piece  = get_piece_at(to);
         }
 
-        BoardState current_state = {castling_rights, en_passant_target, captured_square, captured_piece, !white_to_move};
+        BoardState current_state = {castling_rights, en_passant_target, captured_square, captured_piece, !white_to_move, hash_key};
         
 
-        en_passant_target = 0;
+        if(en_passant_target != 0){
+            int ep_file = __builtin_ctzll(en_passant_target) % 8;
+            hash_key ^= Zobrist::en_passant_key[ep_file];
+        }
 
-        // Implementing all the flags...
+        hash_key ^= Zobrist::castle_key[castling_rights];
+
+        hash_key ^= Zobrist::piece_keys[white_to_move][moved_piece][from];
+        hash_key ^= Zobrist::piece_keys[white_to_move][moved_piece][to];
+        if(captured_piece != EMPTY){
+            hash_key ^= Zobrist::piece_keys[!white_to_move][captured_piece][captured_square];
+        }
+        hash_key ^= Zobrist::side_key;
+
+        en_passant_target = 0;
 
 
         switch(flags){
@@ -256,12 +272,20 @@
         if(from == 4) castling_rights &= ~(WK | WQ);
         if(from == 60) castling_rights &= ~(BK | BQ);
 
+        hash_key ^= Zobrist::castle_key[castling_rights];
+
+        if(en_passant_target != 0){
+            int ep_file = __builtin_ctzll(en_passant_target) % 8;
+            hash_key ^= Zobrist::en_passant_key[ep_file];
+        }
+
         white_to_move = !white_to_move;
 
         return current_state;
     }
 
     void Board::unmake_move(Move move, BoardState prev_state){
+        hash_key = prev_state.hash_key;
 
         castling_rights = prev_state.castling_rights;
         en_passant_target = prev_state.en_passant_target;

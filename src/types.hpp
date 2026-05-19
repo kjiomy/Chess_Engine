@@ -50,6 +50,7 @@ struct BoardState{
     int captured_square;
     PieceType captured_piece;
     bool piece_was_white;
+    uint64_t hash_key;
 };
 
 struct PawnMoves{
