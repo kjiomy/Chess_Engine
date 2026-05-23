@@ -98,6 +98,23 @@ void uci_loop(Board& currentBoard){
             }
         }
         else if(command == "go"){
+            int wtime = 0, btime = 0;
+
+            string token;
+            while(iss >> token){
+                if(token == "wtime"){
+                    iss >> token;
+                    wtime = stoi(token);
+                }else if(token == "btime"){
+                    iss >> token;
+                    btime = stoi(token);
+                }
+            }
+
+            int engine_time = currentBoard.white_to_move ? wtime : btime;
+
+            //Move best_move = Search::iterative_deepening(currentBoard, engine_time);
+
             Move best_move = Search::get_best_move(currentBoard, 8);
 
             if(best_move != 0){
