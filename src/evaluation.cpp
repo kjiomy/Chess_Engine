@@ -115,7 +115,7 @@ namespace Eval{
     int get_pst_value(int square, bool is_white, int piece){
         if(piece == EMPTY) return 0;
 
-        uint8_t target_squre = is_white ? square : (square ^ 56);
+        uint8_t target_squre = is_white ? (square ^ 56) : square;
 
         return pst_table[piece][target_squre];
     }

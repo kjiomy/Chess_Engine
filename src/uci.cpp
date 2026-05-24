@@ -74,6 +74,7 @@ void uci_loop(Board& currentBoard){
         }
         else if(command == "ucinewgame"){
             currentBoard.init_board();
+            Search::history_count = 0;
         }else if(command == "setoption"){
             continue;
         }else if(command == "position"){
@@ -92,6 +93,7 @@ void uci_loop(Board& currentBoard){
                 while(iss >> move_str){
                     Move m = parse_move(currentBoard, move_str);
                     if(m != 0){
+                        Search::position_history[Search::history_count++] = currentBoard.hash_key;
                         currentBoard.make_move(m); 
                     }
                 }
@@ -113,9 +115,7 @@ void uci_loop(Board& currentBoard){
 
             int engine_time = currentBoard.white_to_move ? wtime : btime;
 
-            //Move best_move = Search::iterative_deepening(currentBoard, engine_time);
-
-            Move best_move = Search::get_best_move(currentBoard, 8);
+            Move best_move = Search::iterative_deepening(currentBoard, engine_time);
 
             if(best_move != 0){
                 cout << "bestmove " << move_to_string(best_move) << endl;
