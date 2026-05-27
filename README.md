@@ -22,7 +22,7 @@ to compile the engine on linux/windows you'll need to change the CXX on the MAKE
 ## perft results, while optimizing
 
 Starting Point:
-
+| Depth | Nodes | Time | NPS |
 | Depth 1 | Nodes: 20 | Time: 1.146e-05 s | NPS: 1745200 |
 | Depth 2 | Nodes: 400 | Time: 3.8624e-05 s | NPS: 10356255 |
 | Depth 3 | Nodes: 8902 | Time: 0.000869083 s | NPS: 10242980 |
