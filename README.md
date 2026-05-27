@@ -17,37 +17,43 @@ The engine is built with a strong focus on performance and search optimization, 
  
 ## Compilation
 
-to compile the engine on linux/windows you'll need to change the CXX on the MAKEFILE
+To compile the engine on Linux/Windows you'll need to change the CXX on the MAKEFILE.
 
-## perft results, while optimizing
+## Perft results, while optimizing
 
 Starting Point:
-| Depth | Nodes | Time | NPS |
-| Depth 1 | Nodes: 20 | Time: 1.146e-05 s | NPS: 1745200 |
-| Depth 2 | Nodes: 400 | Time: 3.8624e-05 s | NPS: 10356255 |
-| Depth 3 | Nodes: 8902 | Time: 0.000869083 s | NPS: 10242980 |
-| Depth 4 | Nodes: 197281 | Time: 0.0186704 s | NPS: 10566495 |
-| Depth 5 | Nodes: 4865609 | Time: 0.47753 s | NPS: 10189126 |
-| Depth 6 | Nodes: 119060324 | Time: 11.2894 s | NPS: 10546196 |
+
+| Depth | Nodes | Time (s) | NPS |
+|:---:|---:|---:|---:|
+| 1 | 20 | 1.146e-05 | 1,745,200 |
+| 2 | 400 | 3.8624e-05 | 10,356,255 |
+| 3 | 8,902 | 0.000869083 | 10,242,980 |
+| 4 | 197,281 | 0.0186704 | 10,566,495 |
+| 5 | 4,865,609 | 0.47753 | 10,189,126 |
+| 6 | 119,060,324 | 11.2894 | 10,546,196 |
 
 ---
 
-after moving movegeneration, and implementing inline functions:
+After moving movegeneration and implementing inline functions:
 
-| Depth 1 | Nodes: 20 | Time: 6.98e-06 s | NPS: 2865329 |
-| Depth 2 | Nodes: 400 | Time: 3.3108e-05 s | NPS: 12081672 |
-| Depth 3 | Nodes: 8902 | Time: 0.00102368 s | NPS: 8696102 |
-| Depth 4 | Nodes: 197281 | Time: 0.0162119 s | NPS: 12168899 |
-| Depth 5 | Nodes: 4865609 | Time: 0.35752 s | NPS: 13609320 |
-| Depth 6 | Nodes: 119060324 | Time: 7.18962 s | NPS: 16560024 |
+| Depth | Nodes | Time (s) | NPS |
+|:---:|---:|---:|---:|
+| 1 | 20 | 6.98e-06 | 2,865,329 |
+| 2 | 400 | 3.3108e-05 | 12,081,672 |
+| 3 | 8,902 | 0.00102368 | 8,696,102 |
+| 4 | 197,281 | 0.0162119 | 12,168,899 |
+| 5 | 4,865,609 | 0.35752 | 13,609,320 |
+| 6 | 119,060,324 | 7.18962 | 16,560,024 |
 
 ---
 
-after changing the single piece_variables to a unified array:
+After changing the single piece_variables to a unified array:
 
-| Depth 1 | Nodes: 20 | Time: 3.582e-06 s | NPS: 5583472 |
-| Depth 2 | Nodes: 400 | Time: 2.5007e-05 s | NPS: 15995521 |
-| Depth 3 | Nodes: 8902 | Time: 0.000549997 s | NPS: 16185542 |
-| Depth 4 | Nodes: 197281 | Time: 0.0123092 s | NPS: 16027086 |
-| Depth 5 | Nodes: 4865609 | Time: 0.303075 s | NPS: 16054152 |
-| Depth 6 | Nodes: 119060324 | Time: 7.1152 s | NPS: 16733227 |
+| Depth | Nodes | Time (s) | NPS |
+|:---:|---:|---:|---:|
+| 1 | 20 | 3.582e-06 | 5,583,472 |
+| 2 | 400 | 2.5007e-05 | 15,995,521 |
+| 3 | 8,902 | 0.000549997 | 16,185,542 |
+| 4 | 197,281 | 0.0123092 | 16,027,086 |
+| 5 | 4,865,609 | 0.303075 | 16,054,152 |
+| 6 | 119,060,324 | 7.1152 | 16,733,227 |
