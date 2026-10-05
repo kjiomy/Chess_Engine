@@ -16,19 +16,26 @@ namespace Search {
         return elapsed >= search_time_limit;
     }
 
-    Move iterative_deepening(Board &board, int engine_time) {
+    Move iterative_deepening(Board &board, int engine_time, int engine_inc) {
         search_time_limit = engine_time / 20;
+        if(search_time_limit < engine_inc) search_time_limit = engine_inc;
         if(search_time_limit < 50) search_time_limit = 50;    
         if(search_time_limit > 30000) search_time_limit = 30000; 
 
         search_start_time = std::chrono::high_resolution_clock::now();
         stop_search = false;
+        node_searched = 0;
 
         Move best_move = 0;
         Move previous_best = 0; 
 
         for(int depth = 1; depth <= 64; depth++){
             Move current_move = get_best_move(board, depth, previous_best);
+
+            if(current_move != 0) {
+                best_move = current_move; 
+                previous_best = current_move; 
+            }
 
             if(stop_search) break; 
 
@@ -145,7 +152,7 @@ namespace Search {
             
             board.unmake_move(m, prev_state);
 
-            if(stop_search) return 0;
+            if(stop_search) return best_move;
 
             if(score > alpha) { 
                 alpha = score;
@@ -166,6 +173,12 @@ namespace Search {
 
 
     static inline int quiescence_search(Board &board, int alpha, int beta, int ply) {
+        node_searched++;
+        if(node_searched % 2048 == 0){
+            if(out_of_time()) stop_search = true;
+        }
+        if(stop_search) return 0; 
+
         if (ply > 10) return Eval::evaluate(board);
         int stand_pat = Eval::evaluate(board);
 

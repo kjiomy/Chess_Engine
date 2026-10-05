@@ -8,7 +8,7 @@ namespace Search{
     inline int history_count = 0;
     inline bool stop_search = false;
 
-    Move iterative_deepening(Board &board, int engine_time);
+    Move iterative_deepening(Board &board, int engine_time, int engine_inc);
 
     Move get_best_move(Board &board, int depth, Move previous_best);
 

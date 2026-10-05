@@ -4,7 +4,8 @@
 
 using namespace std;
 
-string move_to_string(Move move){
+string move_to_string(Move move)
+{
     int from = get_move_from(move);
     int to = get_move_to(move);
     int flag = get_move_flags(move);
@@ -17,115 +18,160 @@ string move_to_string(Move move){
 
     // Adding the flags for promotion
 
-    if (flag == PROMO_QUEEN || flag == PROMO_CAPTURE_QUEEN) s += "q";
-    else if (flag == PROMO_ROOK || flag == PROMO_CAPTURE_ROOK) s += "r";
-    else if (flag == PROMO_BISHOP || flag == PROMO_CAPTURE_BISHOP) s += "b";
-    else if (flag == PROMO_KNIGHT || flag == PROMO_CAPTURE_KNIGHT) s += "n";
+    if (flag == PROMO_QUEEN || flag == PROMO_CAPTURE_QUEEN)
+        s += "q";
+    else if (flag == PROMO_ROOK || flag == PROMO_CAPTURE_ROOK)
+        s += "r";
+    else if (flag == PROMO_BISHOP || flag == PROMO_CAPTURE_BISHOP)
+        s += "b";
+    else if (flag == PROMO_KNIGHT || flag == PROMO_CAPTURE_KNIGHT)
+        s += "n";
 
     return s;
 }
 
-Move parse_move(Board &board, string s){
+Move parse_move(Board &board, string s)
+{
     MoveList list;
     MoveGen::generate_all_moves(list, board);
 
-    for (int i = 0; i < list.count; i++) {
+    for (int i = 0; i < list.count; i++)
+    {
         Move m = list.moves[i];
-        
+
         // Cheking if move is legal
         BoardState state = board.make_move(m);
         bool moving_side = !board.white_to_move;
         uint64_t king = board.bitboards[moving_side][KING];
-        
+
         bool legal = true;
-        if (king != 0) {
+        if (king != 0)
+        {
             uint8_t king_sq = __builtin_ctzll(king);
-            if (board.is_square_attacked(king_sq, board.white_to_move)) legal = false;
-        } else {
+            if (board.is_square_attacked(king_sq, board.white_to_move))
+                legal = false;
+        }
+        else
+        {
             legal = false;
         }
         board.unmake_move(m, state);
 
         // if it's legal and string is equal we found the move
-        if (legal && move_to_string(m) == s) {
+        if (legal && move_to_string(m) == s)
+        {
             return m;
         }
     }
-    return 0; 
+    return 0;
 }
 
-void uci_loop(Board& currentBoard){
+void uci_loop(Board &currentBoard)
+{
     string line;
 
-    while(getline(cin, line)){
-        if(line.empty()) continue;
+    while (getline(cin, line))
+    {
+        if (line.empty())
+            continue;
 
         istringstream iss(line);
         string command;
         iss >> command;
 
-        if(command == "uci"){
+        if (command == "uci")
+        {
             cout << "id name KimEngine v1.0" << endl;
             cout << "id author Kim" << endl;
             cout << "uciok" << endl;
         }
-        else if(command == "isready"){
-            cout << "readyok" << endl;  
+        else if (command == "isready")
+        {
+            cout << "readyok" << endl;
         }
-        else if(command == "ucinewgame"){
+        else if (command == "ucinewgame")
+        {
             currentBoard.init_board();
             Search::history_count = 0;
-        }else if(command == "setoption"){
+        }
+        else if (command == "setoption")
+        {
             continue;
-        }else if(command == "position"){
+        }
+        else if (command == "position")
+        {
             string token;
             iss >> token;
 
             // there is a starting position
-            if(token == "startpos"){
+            if (token == "startpos")
+            {
                 currentBoard.init_board();
-                iss >> token; 
+                Search::history_count = 0;
+                iss >> token;
             }
 
-            
-            if(token == "moves"){
+            if (token == "moves")
+            {
                 string move_str;
-                while(iss >> move_str){
+                while (iss >> move_str)
+                {
                     Move m = parse_move(currentBoard, move_str);
-                    if(m != 0){
+                    if (m != 0)
+                    {
                         Search::position_history[Search::history_count++] = currentBoard.hash_key;
-                        currentBoard.make_move(m); 
+                        currentBoard.make_move(m);
                     }
                 }
             }
         }
-        else if(command == "go"){
+        else if (command == "go")
+        {
             int wtime = 0, btime = 0;
+            int winc = 0, binc = 0;
 
             string token;
-            while(iss >> token){
-                if(token == "wtime"){
+            while (iss >> token)
+            {
+                if (token == "wtime")
+                {
                     iss >> token;
                     wtime = stoi(token);
-                }else if(token == "btime"){
+                }
+                else if (token == "btime")
+                {
                     iss >> token;
                     btime = stoi(token);
+                }
+                else if (token == "binc")
+                {
+                    iss >> token;
+                    binc = stoi(token);
+                }
+                else if (token == "winc")
+                {
+                    iss >> token;
+                    winc = stoi(token);
                 }
             }
 
             int engine_time = currentBoard.white_to_move ? wtime : btime;
+            int engine_inc = currentBoard.white_to_move ? winc : binc;
 
-            Move best_move = Search::iterative_deepening(currentBoard, engine_time);
+            Move best_move = Search::iterative_deepening(currentBoard, engine_time, engine_inc);
 
-            if(best_move != 0){
+            if (best_move != 0)
+            {
                 cout << "bestmove " << move_to_string(best_move) << endl;
-            } else {
-                cout << "bestmove 0000" << endl; 
+            }
+            else
+            {
+                cout << "bestmove 0000" << endl;
             }
         }
 
-        
-        else if(command == "quit"){
+        else if (command == "quit")
+        {
             break;
         }
     }
